@@ -450,14 +450,8 @@ async def delete_contest(interaction, contest_name: str):
   client.database.delete_contest(contest_name)
   await interaction.response.send_message("Contest has been deleted!")
   
-  
 
-  
-
-
-
-# commands:
-
+# Description of all of the nessecary commands
 
 # create Contest - ADMIN
 
@@ -479,7 +473,7 @@ async def delete_contest(interaction, contest_name: str):
 
 # team rankings
 
-# #1 team
+# DO NOT DELETE THESE LINES OF CODE:
 running()
 client.run(os.environ['token'])
 
