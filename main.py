@@ -417,6 +417,16 @@ async def link(interaction, contest_name: str):
   else:
     await interaction.response.send_message("Sorry, you cannot access this right now.",ephemeral = True)
 
+@tree.command(name = "change_link", description = "changes the link of a contest.", guild=discord.Object(id=current_guild_id))
+@app_commands.autocomplete(contest_name = getContestNames)
+@app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
+async def change_link(interaction, contest_name: str, new_link: str):
+  contest = client.database.get_contest(contest_name)
+  contest.link = new_link
+  client.database.update_contest(contest)
+  await interaction.response.send_message("Link has been changed!")
+
+
 @tree.command(name = "team_rankings", description = "get the team rankings for the specified contest.", guild=discord.Object(id=current_guild_id))
 @app_commands.autocomplete(contest_name = getContestNames)
 async def team_rankings(interaction, contest_name: str):
