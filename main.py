@@ -9,7 +9,6 @@ from subprocess import call
 import requests
 from discord import app_commands
 
-
 from contest import Contest
 from team import Team
 from question import Question
@@ -173,6 +172,7 @@ async def join_team(interaction, contest_name:str, team_name:str):
 
 @tree.command(name = "modify_team_size_limit", description = "Modifies the team size limit for a contest. ",guild=discord.Object(id=current_guild_id))
 @app_commands.autocomplete(contest_name=getContestNames)
+@app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def modify_team_size_limit(interaction, contest_name: str, size_limit: int):
   contest = client.database.get_contest(contest_name)
   contest.teamSizeLimit = size_limit
@@ -180,6 +180,7 @@ async def modify_team_size_limit(interaction, contest_name: str, size_limit: int
 
 @tree.command(name = "modify_total_teams_limit", description = "Modifies the total teams limit for a contest. ",guild=discord.Object(id=current_guild_id))
 @app_commands.autocomplete(contest_name=getContestNames)
+@app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def modify_team_size_limit(interaction, contest_name: str, teams_limit: int):
   contest = client.database.get_contest(contest_name)
   contest.totalTeamsLimit = teams_limit
@@ -357,19 +358,15 @@ async def delete_contest_channels(interaction,contest_name: str):
 async def answer_question(interaction,contest_name:str,question_number: int, answer: float):
   try:
     contest = client.database.get_contest(contest_name)
-
-    try:
-      contest.get_team_of_user(interaction.user.id).answer(contest.get_question(question_number),answer)
-      client.database.update_contest(contest)
-      await interaction.response.send_message(str(interaction.user) + " has answered question #{questionNumber}!".format(questionNumber = question_number))
-    except:
-      await interaction.response.send_message("Sorry, but the contest doesn't have a problem with number " + str(question_number))
-
-
+    contest.get_team_of_user(interaction.user.id).answer(contest.get_question(question_number),answer)
+    client.database.update_contest(contest)
+    await interaction.response.send_message(str(interaction.user) + " has answered question #{questionNumber}!".format(questionNumber = question_number))
   except AnswersAlreadySubmittedException:
     await interaction.response.send_message("Sorry, you have already submitted your answers. Once you submit your answers, you cannot answer anything else.",ephemeral = True)
   except WrongPeriodException:
     await interaction.response.send_message("Sorry, you can't submit any answers right now, as the contest period is not the competition period.",ephemeral = True)
+  except:
+    await interaction.response.send_message("Sorry, but the contest doesn't have a problem with number " + str(question_number))
 
 
 
