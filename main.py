@@ -412,7 +412,10 @@ async def all_questions(interaction, contest_name: str):
 @app_commands.autocomplete(contest_name = getContestNames)
 async def link(interaction, contest_name: str):
   contest = client.database.get_contest(contest_name)
-  await interaction.response.send_message(contest.link,ephemeral = True)
+  if contest.period == ContestPeriod.competition or contest.period == ContestPeriod.postCompetition:
+    await interaction.response.send_message(contest.link,ephemeral = True)
+  else:
+    await interaction.response.send_message("Sorry, you cannot access this right now.",ephemeral = True)
 
 @tree.command(name = "team_rankings", description = "get the team rankings for the specified contest.", guild=discord.Object(id=current_guild_id))
 @app_commands.autocomplete(contest_name = getContestNames)
