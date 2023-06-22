@@ -47,7 +47,7 @@ async def on_ready():
 
 
 
- 
+
 
 
 
@@ -94,7 +94,7 @@ async def create_contest(interaction,name:str,link:str,team_size_limit:int=None,
   newContest = Contest(name.lower(),link,team_size_limit,total_teams_limit)
   await interaction.response.send_message("Contest successfully created!")
   client.database.update_contest(newContest)
-  
+
 
 
 # functional
@@ -115,20 +115,20 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
   if member_two != None: inviteList.append(member_two)
   if member_three != None: inviteList.append(member_three)
   if member_four != None: inviteList.append(member_four)
-  
+
   contest = client.database.get_contest(contest_name)
 
   try:
     newTeam = Team(contestInstance = contest,name = team_name, ownerID = interaction.user.id, invitedMemberIDs = [member.id for member in inviteList])
     contest.add_team(newTeam)
     print(newTeam.getData())
-    
+
     await interaction.response.send_message("Team '{teamName}' has been added to the contest with the users {members} invited. In order for them to join your team, they must use /join_team {teamName}.".format(members = [member.display_name for member in inviteList], teamName = team_name))
-    
+
     for member in inviteList:
       channel = await member.create_dm()
       await channel.send("The user {user} has invited you to join the team '{teamName}' for the contest '{contestName}'. In order to join, use '/join_team {teamName}' in the Mathematics Server (it doesn't work within DMs). If you don't want to join, ignore this message.".format(user = interaction.user, contestName = contest.name, teamName = team_name))
-    
+
     client.database.update_contest(contest)
   except WrongPeriodException:
     await interaction.response.send_message("You can only create a team when this contest is in it's signup phase. Sorry!")
@@ -221,7 +221,7 @@ async def leave_current_team(interaction, contest_name: str, new_owner: discord.
     await interaction.response.send_message("Ownership has been successfully transfered to {newOwner}!".format(newOwner = new_owner))
   else:
     await interaction.response.send_message("Sorry, you're not the owner of the team you're in, so you cannot transfer ownership.", ephemeral = True)
-  
+
 
 
 
@@ -230,7 +230,7 @@ async def leave_current_team(interaction, contest_name: str, new_owner: discord.
 @app_commands.autocomplete(contest_name=getContestNames)
 async def unregister_team(interaction, contest_name: str):
   contest = client.database.get_contest(contest_name)
-  
+
   user_team = contest.get_team_of_user(interaction.user.id)
 
   if user_team == None:
@@ -298,7 +298,7 @@ async def change_contest_period(interaction, contest_name: str, period: str):
   elif period == 'post-competition':
     period = ContestPeriod.postCompetition
 
-  
+
   contest = client.database.get_contest(contest_name)
   contest.period = period
   client.database.update_contest(contest)
@@ -328,7 +328,7 @@ async def create_contest_channels(interaction,contest_name:str):
       overwrites[interaction.guild.get_member(memberID)] = discord.PermissionOverwrite(read_messages = True)
     channel = await interaction.guild.create_text_channel(team.name+'-contest-channel',overwrites=overwrites)
     contest.channelIDInfo[team.name] = interaction.channel_id
-  
+
   await interaction.response.send_message("Channels have been opened!.")
 
 
@@ -341,8 +341,8 @@ async def delete_contest_channels(interaction,contest_name: str):
   contest = client.database.get_contest(contest_name)
   for team in contest.all_teams:
     await interaction.guild.get_channel(contest.channelIDInfo[team.name]+'-contest-channel').delete()
-  
-    
+
+
   await interaction.response.send_message("All contest channels deleted!.")
 
 
@@ -354,20 +354,20 @@ async def delete_contest_channels(interaction,contest_name: str):
 async def answer_question(interaction,contest_name:str,question_number: int, answer: float):
   try:
     contest = client.database.get_contest(contest_name)
-    
+
     try:
       contest.get_team_of_user(interaction.user.id).answer(contest.get_question(question_number),answer)
       client.database.update_contest(contest)
       await interaction.response.send_message(str(interaction.user) + " has answered question #{questionNumber}!".format(questionNumber = question_number))
     except:
       await interaction.response.send_message("Sorry, but the contest doesn't have a problem with number " + str(question_number))
-      
-  
+
+
   except AnswersAlreadySubmittedException:
     await interaction.response.send_message("Sorry, you have already submitted your answers. Once you submit your answers, you cannot answer anything else.",ephemeral = True)
   except WrongPeriodException:
     await interaction.response.send_message("Sorry, you can't submit any answers right now, as the contest period is not the competition period.",ephemeral = True)
-  
+
 
 
 @tree.command(name = "submit_all_answers", description = "Submits your teams' answers. Once you submit, you CANNOT unsubmit!", guild=discord.Object(id=current_guild_id))
@@ -390,7 +390,7 @@ async def submit_team_answers(interaction, contest_name: str):
 @app_commands.autocomplete(contest_name = getContestNames)
 @app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def all_questions(interaction, contest_name: str):
-  contest = client.database.get_contest(contest_name) 
+  contest = client.database.get_contest(contest_name)
   question_string = ""
 
   for question in contest.all_questions:
@@ -415,7 +415,7 @@ async def link(interaction, contest_name: str):
 @app_commands.autocomplete(contest_name = getContestNames)
 async def team_rankings(interaction, contest_name: str):
   try:
-    contest = client.database.get_contest(contest_name) 
+    contest = client.database.get_contest(contest_name)
     rankingString = ""
     counter = 1
     for team in contest.team_rankings:
@@ -436,7 +436,7 @@ async def all_teams(interaction, contest_name: str):
   allTeamsString = ""
   for team in contest.all_teams:
     allTeamsString += "Team '{teamName}', with owner '{owner}' and members {members}, \n".format(
-      teamName = team.name, 
+      teamName = team.name,
       owner = interaction.guild.get_member(team.ownerID).name,
       members = [interaction.guild.get_member(memberID).name for memberID in team.memberIDs]
     )
@@ -449,7 +449,7 @@ async def all_teams(interaction, contest_name: str):
 async def delete_contest(interaction, contest_name: str):
   client.database.delete_contest(contest_name)
   await interaction.response.send_message("Contest has been deleted!")
-  
+
 
 # Description of all of the nessecary commands
 
@@ -475,8 +475,4 @@ async def delete_contest(interaction, contest_name: str):
 
 # DO NOT DELETE THESE LINES OF CODE:
 running()
-client.run(os.environ['token'])
-
-
-
-
+client.run(os.getenv('token'))

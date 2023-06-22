@@ -14,14 +14,14 @@ class DataStorageAPI:
       if evaluate:
         return ast.literal_eval(str(data.content)[2:-1])
       else:
-        return data.content[2:-1] 
+        return data.content[2:-1]
     else:
       raise DataAPIException
-      return 
+      return
 
   def setValue(self,key:str,value):
     input = str(value)
-    
+
     data = self.session.post("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key), data = {"value":input})
     if str(data) == "<Response [200]>":
       return data.content[2:-1]
@@ -34,4 +34,3 @@ class DataStorageAPI:
       return data.content[2:-1]
     else:
       raise DataAPIException
-    
