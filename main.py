@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 
 import os
 import discord
@@ -6,6 +8,7 @@ import ast
 from subprocess import call
 import requests
 from discord import app_commands
+
 
 from contest import Contest
 from team import Team
