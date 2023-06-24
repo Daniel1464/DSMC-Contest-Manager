@@ -1,5 +1,5 @@
-from dotenv import load_dotenv
-load_dotenv()
+#from dotenv import load_dotenv
+#load_dotenv()
 
 import os
 import discord
@@ -323,16 +323,22 @@ async def create_contest_channels(interaction,contest_name:str):
   for team in contest.all_teams:
     manager_role = discord.utils.get(interaction.guild.roles,name="Olympiad Team")
     admin_role = discord.utils.get(interaction.guild.roles,name="Olympiad Manager")
-    overwrites = {
-      interaction.guild.default_role: discord.PermissionOverwrite(read_messages = False),
-      manager_role: discord.PermissionOverwrite(read_messages = True),
-      admin_role: discord.PermissionOverwrite(read_messages = True),
-    }
-    for memberID in team.memberIDs:
-      overwrites[interaction.guild.get_member(memberID)] = discord.PermissionOverwrite(read_messages = True)
-    channel = await interaction.guild.create_text_channel(team.name+'-contest-channel',overwrites=overwrites)
-    contest.channelIDInfo[team.name] = interaction.channel_id
-
+    try:
+      category = discord.utils.get(interaction.guild.categories, name='DSMC 2023')
+      overwrites = {
+        interaction.guild.default_role: discord.PermissionOverwrite(read_messages = False),
+        manager_role: discord.PermissionOverwrite(read_messages = True),
+        admin_role: discord.PermissionOverwrite(read_messages = True),
+        interaction.guild.get_member(team.ownerID): discord.PermissionOverwrite(read_messages = True)
+      }
+      for memberID in team.memberIDs:
+        overwrites[interaction.guild.get_member(memberID)] = discord.PermissionOverwrite(read_messages = True)
+      channel = await interaction.guild.create_text_channel(team.name+'-contest-channel',overwrites=overwrites, category = category)
+      contest.channelIDInfo[team.name] = channel.id
+      client.database.update_contest(contest)
+    except:
+      await interaction.response.send_message("Hmmm.... It looks like this server doesn't have a category named 'DSMC 2023'. Try again.")
+      return
   await interaction.response.send_message("Channels have been opened!.")
 
 
@@ -344,7 +350,7 @@ async def create_contest_channels(interaction,contest_name:str):
 async def delete_contest_channels(interaction,contest_name: str):
   contest = client.database.get_contest(contest_name)
   for team in contest.all_teams:
-    await interaction.guild.get_channel(contest.channelIDInfo[team.name]+'-contest-channel').delete()
+    await interaction.guild.get_channel(contest.channelIDInfo[team.name]).delete()
 
 
   await interaction.response.send_message("All contest channels deleted!.")
