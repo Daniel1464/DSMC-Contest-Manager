@@ -110,7 +110,9 @@ async def getContestNames(interaction: discord.Interaction, current:str):
 @app_commands.autocomplete(contest_name=getContestNames)
 async def all_contest_competitors(interaction,contest_name:str):
   contest = client.database.get_contest(contest_name)
-  await interaction.response.send_message(contest.all_contest_participants)
+  all_participants = [interaction.guild.get_member(memberID).name for memberID in contest.all_contest_participants]
+  all_invited_participants = [interaction.guild.get_member(memberID).name for memberID in contest.all_invited_members]
+  await interaction.response.send_message("These people are currently in a team: \n" + str(all_participants) + "\n These people are currently invited to a team: " + str(all_invited_participants))
 
 
 
@@ -157,13 +159,13 @@ async def invite_more_members(interaction, contest_name: str, member_one: discor
       contest.get_team_of_user(interaction.user.id).inviteMember(member_one.id)
       message += "{memberID} has been successfully added. \n".format(memberID = member_one.id)
   
-    if member_one != None:
-      contest.get_team_of_user(interaction.user.id).inviteMember(member_one.id)
-      message += "{memberID} has been successfully added. \n".format(memberID = member_one.id)
+    if member_two != None:
+      contest.get_team_of_user(interaction.user.id).inviteMember(member_two.id)
+      message += "{memberID} has been successfully added. \n".format(memberID = member_two.id)
   
-    if member_one != None:
-      contest.get_team_of_user(interaction.user.id).inviteMember(member_one.id)
-      message += "{memberID} has been successfully added. \n".format(memberID = member_one.id)
+    if member_three != None:
+      contest.get_team_of_user(interaction.user.id).inviteMember(member_three.id)
+      message += "{memberID} has been successfully added. \n".format(memberID = member_three.id)
 
     await interaction.response.send_message(message)
   except:
