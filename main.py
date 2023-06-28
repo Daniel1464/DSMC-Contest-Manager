@@ -166,7 +166,7 @@ async def invite_more_members(interaction, contest_name: str, member_one: discor
     if member_three != None:
       contest.get_team_of_user(interaction.user.id).inviteMember(member_three.id)
       message += "{memberID} has been successfully added. \n".format(memberID = member_three.id)
-
+    client.database.update_contest(contest)
     await interaction.response.send_message(message)
   except:
     await interaction.response.send_message("Something went wrong. Contact @DanielRocksUrMom for follow-up.")
