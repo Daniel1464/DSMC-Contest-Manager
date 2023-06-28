@@ -151,31 +151,24 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
 @app_commands.autocomplete(contest_name=getContestNames)
 async def invite_more_members(interaction, contest_name: str, member_one: discord.Member = None, member_two: discord.Member = None, member_three: discord.Member = None):
   contest = client.database.get_contest(contest_name)
+  message = ""
   try:
     if member_one != None:
-      contest.get_team_of_user(interaction.user.id).addMember(member_one)
-  except MemberNotInvitedException:
-    await interaction.response.send_message("member_one has not been invited.")
-  except MemberInAnotherTeamException:
-    await interaction.response.send_message("member_one is already in another team.")
+      contest.get_team_of_user(interaction.user.id).inviteMember(member_one.id)
+      message += "{memberID} has been successfully added. \n".format(memberID = member_one.id)
+  
+    if member_one != None:
+      contest.get_team_of_user(interaction.user.id).inviteMember(member_one.id)
+      message += "{memberID} has been successfully added. \n".format(memberID = member_one.id)
+  
+    if member_one != None:
+      contest.get_team_of_user(interaction.user.id).inviteMember(member_one.id)
+      message += "{memberID} has been successfully added. \n".format(memberID = member_one.id)
 
-  try:
-    if member_two != None:
-      contest.get_team_of_user(interaction.user.id).addMember(member_two)
-  except MemberNotInvitedException:
-    await interaction.response.send_message("member_two has not been invited.")
-  except MemberInAnotherTeamException:
-    await interaction.response.send_message("member_two is already in another team.")
+    await interaction.response.send_message(message)
+  except:
+    await interaction.response.send_message("Something went wrong. Contact @DanielRocksUrMom for follow-up.")
 
-  try:
-    if member_three != None:
-      contest.get_team_of_user(interaction.user.id).addMember(member_three)
-  except MemberNotInvitedException:
-    await interaction.response.send_message("member_three has not been invited.")
-  except MemberInAnotherTeamException:
-    await interaction.response.send_message("member_three is already in another team.")
-
-  await interaction.response.send_message("Success.")
 
 
 
