@@ -3,7 +3,6 @@ load_dotenv()
 
 import os
 import discord
-from running import *
 import ast
 from subprocess import call
 import requests
@@ -107,6 +106,13 @@ async def getContestNames(interaction: discord.Interaction, current:str):
   return data
 
 
+@tree.command(name = "all_contest_competitors", description = "Displays all contest competitors",guild=discord.Object(id=current_guild_id))
+@app_commands.autocomplete(contest_name=getContestNames)
+async def all_contest_competitors(interaction,contest_name:str):
+  contest = client.database.get_contest(contest_name)
+  await interaction.response.send_message(contest.all_contest_participants)
+
+
 
 # this command allows a user to register their own team, along with 3 invited members.
 @tree.command(name = "register_team", description = "Registers a team into a contest. ",guild=discord.Object(id=current_guild_id))
@@ -134,6 +140,11 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
     client.database.update_contest(contest)
   except WrongPeriodException:
     await interaction.response.send_message("You can only create a team when this contest is in it's signup phase. Sorry!")
+  except MemberInAnotherTeamException:
+    try:
+      await interaction.response.send_message("You seem to be in another team as of now. The team that you currently are in is {teamName}.".format(teamName = contest.get_team_of_user(interaction.user.id)))
+    except:
+      await interaction.response.send_message("Oh no.... something seriously wrong has occured. Please consult @DanielRocksUrMom for follow up(Error: Member is in another team exception has been thrown, but the user hasn't joined a team yet.")
 
 
 
@@ -225,6 +236,10 @@ async def leave_current_team(interaction, contest_name: str, new_owner: discord.
     await interaction.response.send_message("Ownership has been successfully transfered to {newOwner}!".format(newOwner = new_owner))
   else:
     await interaction.response.send_message("Sorry, you're not the owner of the team you're in, so you cannot transfer ownership.", ephemeral = True)
+
+
+
+
 
 
 
@@ -493,5 +508,4 @@ async def delete_contest(interaction, contest_name: str):
 # team rankings
 
 # DO NOT DELETE THESE LINES OF CODE:
-running()
 client.run(os.getenv('token'))
