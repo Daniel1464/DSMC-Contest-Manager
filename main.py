@@ -43,7 +43,7 @@ current_guild_id = 624314920158232616
 async def on_ready():
   client.database = ContestDatabase('password')
   client.something = 0
-  #print(await tree.sync(guild=discord.Object(id=current_guild_id)))
+  print(await tree.sync(guild=discord.Object(id=current_guild_id)))
   print("Ready!")
 
 
@@ -145,6 +145,37 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
       await interaction.response.send_message("You seem to be in another team as of now. The team that you currently are in is {teamName}.".format(teamName = contest.get_team_of_user(interaction.user.id)))
     except:
       await interaction.response.send_message("Oh no.... something seriously wrong has occured. Please consult @DanielRocksUrMom for follow up(Error: Member is in another team exception has been thrown, but the user hasn't joined a team yet.")
+
+
+@tree.command(name = "invite_more_members", description = "Invites more members to your team",guild=discord.Object(id=current_guild_id))
+@app_commands.autocomplete(contest_name=getContestNames)
+async def invite_more_members(interaction, contest_name: str, member_one: discord.Member = None, member_two: discord.Member = None, member_three: discord.Member = None):
+  contest = client.database.get_contest(contest_name)
+  try:
+    if member_one != None:
+      contest.get_team_of_user(interaction.user.id).addMember(member_one)
+  except MemberNotInvitedException:
+    await interaction.response.send_message("member_one has not been invited.")
+  except MemberInAnotherTeamException:
+    await interaction.response.send_message("member_one is already in another team.")
+
+  try:
+    if member_two != None:
+      contest.get_team_of_user(interaction.user.id).addMember(member_two)
+  except MemberNotInvitedException:
+    await interaction.response.send_message("member_two has not been invited.")
+  except MemberInAnotherTeamException:
+    await interaction.response.send_message("member_two is already in another team.")
+
+  try:
+    if member_three != None:
+      contest.get_team_of_user(interaction.user.id).addMember(member_three)
+  except MemberNotInvitedException:
+    await interaction.response.send_message("member_three has not been invited.")
+  except MemberInAnotherTeamException:
+    await interaction.response.send_message("member_three is already in another team.")
+
+  await interaction.response.send_message("Success.")
 
 
 
