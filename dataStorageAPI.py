@@ -2,8 +2,10 @@ import ast
 import requests
 import os
 from customExceptions import DataAPIException
+
+
 class DataStorageAPI:
-  def __init__(self,passwordStringKey: str = "password"):
+  def __init__(self, passwordStringKey: str = "password"):
     self.passwordStringKey = passwordStringKey
     self.session = requests.Session()
     self.session.get("https://data-storage-system.danielchen1464.repl.co")
@@ -11,15 +13,15 @@ class DataStorageAPI:
   def getKeys(self):
     res = self.session.get(
       "https://data-storage-system.danielchen1464.repl.co/get_keys?password={passcode}"
-        .format(passcode = os.environ[self.passwordStringKey])
-      )
+      .format(passcode = os.environ[self.passwordStringKey])
+    )
 
     if res.ok:
       return res.content.decode("utf-8")
     else:
       raise DataAPIException
 
-  def getValue(self,key: str,evaluate: bool = False):
+  def getValue(self, key: str, evaluate: bool = False):
     res = self.session.get("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key))
 
     if res.ok:
@@ -33,17 +35,17 @@ class DataStorageAPI:
       raise DataAPIException
       return
 
-  def setValue(self,key:str,value):
+  def setValue(self, key: str, value):
     input = str(value)
 
-    res = self.session.post("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key), data = {"value":input})
+    res = self.session.post("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key), data = {"value": input})
 
     if res.ok:
       return res.content.decode("utf-8")
     else:
       raise DataAPIException
 
-  def delValue(self,key:str):
+  def delValue(self, key: str):
     res = self.session.get("https://data-storage-system.danielchen1464.repl.co/delete_key?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key))
 
     if res.ok:

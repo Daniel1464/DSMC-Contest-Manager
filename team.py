@@ -4,8 +4,7 @@ from contestPeriod import ContestPeriod
 
 
 class Team:
-
-  def __init__(self,contestInstance, name:str, ownerID: int, memberIDs: list = [], invitedMemberIDs: list = []):
+  def __init__(self, contestInstance, name: str, ownerID: int, memberIDs: list = [], invitedMemberIDs: list = []):
     from contest import Contest
     if contestInstance.teamSizeLimit is not None and len(memberIDs) > contestInstance.teamSizeLimit:
       raise TeamSizeExceededException
@@ -19,24 +18,22 @@ class Team:
       self.invitedMemberIDs = invitedMemberIDs
       self.answerScore = {}
 
-
-  def memberInTeam(self,memberID: int) -> bool:
+  def memberInTeam(self, memberID: int) -> bool:
     return memberID == self.ownerID or memberID in self.memberIDs
 
-  def memberInvitedToTeam(self,memberID: int) -> bool:
+  def memberInvitedToTeam(self, memberID: int) -> bool:
     return memberID in self.invitedMemberIDs
 
-
-  def inviteMember(self,memberID: int):
+  def inviteMember(self, memberID: int):
     self.invitedMemberIDs.append(memberID)
 
-  def uninviteMember(self,memberID: int):
+  def uninviteMember(self, memberID: int):
     try:
       self.invitedMemberIDs.remove(memberID)
     except:
       raise MemberNotInTeamException
 
-  def addMember(self,memberID: int):
+  def addMember(self, memberID: int):
 
     if memberID not in self.invitedMemberIDs:
       raise MemberNotInvitedException
@@ -59,7 +56,7 @@ class Team:
     else:
       raise MemberNotInTeamException
 
-  def answer(self,question, answer: float):
+  def answer(self, question, answer: float):
     if self.contestInstance.period == ContestPeriod.competition:
       if self.answersSubmitted:
         raise AnswersAlreadySubmittedException
@@ -88,7 +85,6 @@ class Team:
     else:
       raise MemberNotInTeamException
 
-
   @property
   def totalPoints(self) -> int:
     if not self.answersSubmitted:
@@ -98,8 +94,6 @@ class Team:
     for problemNumber in self.answerScore.keys():
       total += self.answerScore[problemNumber]
     return total
-
-
 
   def getData(self):
     return {
