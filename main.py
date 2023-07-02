@@ -39,9 +39,6 @@ current_guild_id = 624314920158232616
 async def on_ready():
   client.database = ContestDatabase('password')
   client.something = 0
-  # we don't want to sync the entire tree, that's going to make the bot start up very slowly
-  #print(await tree.sync())
-  print(await tree.sync(guild=discord.Object(id=current_guild_id)))
   print("Ready!")
 
 
@@ -484,6 +481,14 @@ async def delete_contest(interaction, contest_name: str):
 def is_admin(interaction: discord.Interaction):
   return interaction.user.id in [614549755342880778, 757741186432630884]
 
+
+@tree.command(name = "sync", description="[Bot administrators only]")
+@app_commands.check(is_admin)
+async def sync_commands(interaction: discord.Interaction):
+  await interaction.response.defer(thinking=True)
+  await tree.sync()
+  await tree.sync(guild=discord.Object(id=current_guild_id))
+  await interaction.followup.send("Commands synced.")
 
 db_group = app_commands.Group(name="db", description="[Bot administrators only]")
 
