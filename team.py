@@ -1,13 +1,19 @@
-from functools import singledispatch
-from customExceptions import *
 from contestPeriod import ContestPeriod
+
+from customExceptions import (
+  AnswersAlreadySubmittedException,
+  MemberInAnotherTeamException,
+  MemberNotInTeamException,
+  MemberNotInvitedException,
+  OwnerLeaveTeamException,
+  TeamSizeExceededException,
+  WrongPeriodException
+)
 
 
 class Team:
-    
-  def __init__(self,contestInstance, name:str, ownerID: int, memberIDs: list = [], invitedMemberIDs: list = []):
-    from contest import Contest
-    if contestInstance.teamSizeLimit != None and len(memberIDs) > contestInstance.teamSizeLimit:
+  def __init__(self, contestInstance, name: str, ownerID: int, memberIDs: list = [], invitedMemberIDs: list = []):
+    if contestInstance.teamSizeLimit is not None and len(memberIDs) > contestInstance.teamSizeLimit:
       raise TeamSizeExceededException
     else:
       self.submitRanking = 0
@@ -19,34 +25,32 @@ class Team:
       self.invitedMemberIDs = invitedMemberIDs
       self.answerScore = {}
 
-
-  def memberInTeam(self,memberID: int) -> bool:
+  def memberInTeam(self, memberID: int) -> bool:
     return memberID == self.ownerID or memberID in self.memberIDs
 
-  def memberInvitedToTeam(self,memberID: int) -> bool:
+  def memberInvitedToTeam(self, memberID: int) -> bool:
     return memberID in self.invitedMemberIDs
-    
 
-  def inviteMember(self,memberID: int):
+  def inviteMember(self, memberID: int):
     self.invitedMemberIDs.append(memberID)
 
-  def uninviteMember(self,memberID: int):
+  def uninviteMember(self, memberID: int):
     try:
       self.invitedMemberIDs.remove(memberID)
     except:
       raise MemberNotInTeamException
-  
-  def addMember(self,memberID: int):
 
-    if not memberID in self.invitedMemberIDs:
+  def addMember(self, memberID: int):
+
+    if memberID not in self.invitedMemberIDs:
       raise MemberNotInvitedException
       return
-    
+
     if memberID in self.contestInstance.all_contest_participants:
       raise MemberInAnotherTeamException
       return
-    
-    if self.contestInstance.teamSizeLimit == None or len(self.memberIDs) < self.contestInstance.teamSizeLimit:
+
+    if self.contestInstance.teamSizeLimit is None or len(self.memberIDs) < self.contestInstance.teamSizeLimit:
       self.memberIDs.append(memberID)
     else:
       raise TeamSizeExceededException
@@ -59,12 +63,12 @@ class Team:
     else:
       raise MemberNotInTeamException
 
-  def answer(self,question, answer: float):
+  def answer(self, question, answer: float):
     if self.contestInstance.period == ContestPeriod.competition:
       if self.answersSubmitted:
         raise AnswersAlreadySubmittedException
         return
-      
+
       if question.isCorrect(answer):
         self.answerScore[question.getNumber()] = question.pointValue
       else:
@@ -86,20 +90,17 @@ class Team:
       self.memberIDs.remove(newOwnerID)
       self.ownerID = newOwnerID
     else:
-      raise MemberNotInTeamException 
-
+      raise MemberNotInTeamException
 
   @property
   def totalPoints(self) -> int:
     if not self.answersSubmitted:
       return 0
-    
+
     total = 0
     for problemNumber in self.answerScore.keys():
       total += self.answerScore[problemNumber]
     return total
-
-
 
   def getData(self):
     return {
