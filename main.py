@@ -1,6 +1,3 @@
-# from dotenv import load_dotenv
-# load_dotenv()
-
 import os
 import discord
 from discord import app_commands
@@ -10,6 +7,7 @@ from team import Team
 from question import Question
 from contestDatabase import ContestDatabase
 from contestPeriod import ContestPeriod
+from dotenv import load_dotenv
 
 from customExceptions import (
   AnswersAlreadySubmittedException,
@@ -23,6 +21,8 @@ from customExceptions import (
 
 import traceback
 import logging
+
+load_dotenv()
 
 # TODO: Fix channel creation!(Still kinda scuffed rn, channels aren't being deleted)
 
