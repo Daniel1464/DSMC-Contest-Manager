@@ -9,8 +9,17 @@ from contest import Contest
 from team import Team
 from question import Question
 from contestDatabase import ContestDatabase
-from customExceptions import *
 from contestPeriod import ContestPeriod
+
+from customExceptions import (
+  AnswersAlreadySubmittedException,
+  DataAPIException,
+  MemberInAnotherTeamException,
+  MemberNotInTeamException,
+  MemberNotInvitedException,
+  OwnerLeaveTeamException,
+  WrongPeriodException
+)
 
 import traceback
 import logging

@@ -1,7 +1,15 @@
 from question import Question
 from team import Team
 from functools import singledispatch
-from customExceptions import *
+
+from customExceptions import (
+  ContestTeamLimitException,
+  MemberInAnotherTeamException,
+  TeamNameException,
+  TeamNotInContestException,
+  WrongPeriodException
+)
+
 from contestPeriod import ContestPeriod
 
 

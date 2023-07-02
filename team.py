@@ -1,6 +1,15 @@
 from functools import singledispatch
-from customExceptions import *
 from contestPeriod import ContestPeriod
+
+from customExceptions import (
+  AnswersAlreadySubmittedException,
+  MemberInAnotherTeamException,
+  MemberNotInTeamException,
+  MemberNotInvitedException,
+  OwnerLeaveTeamException,
+  TeamSizeExceededException,
+  WrongPeriodException
+)
 
 
 class Team:
