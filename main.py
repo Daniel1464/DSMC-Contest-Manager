@@ -231,7 +231,7 @@ async def modify_team_size_limit(interaction, contest_name: str, size_limit: int
 @tree.command(name = "modify_total_teams_limit", description = "MOD ONLY. Modifies the total teams limit for a contest. ",guild=discord.Object(id=current_guild_id))
 @app_commands.autocomplete(contest_name=getContestNames)
 @app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
-async def modify_team_size_limit(interaction, contest_name: str, teams_limit: int):
+async def modify_total_teams_limit(interaction, contest_name: str, teams_limit: int):
   contest = client.database.get_contest(contest_name)
   contest.totalTeamsLimit = teams_limit
   client.database.update_contest(contest)
@@ -266,7 +266,7 @@ async def leave_current_team(interaction, contest_name: str):
 # unstested
 @tree.command(name = "transfer_ownership", description = "If you are the owner of a team, transfers ownership to another person within your team.", guild=discord.Object(id=current_guild_id))
 @app_commands.autocomplete(contest_name=getContestNames)
-async def leave_current_team(interaction, contest_name: str, new_owner: discord.Member):
+async def transfer_ownership(interaction, contest_name: str, new_owner: discord.Member):
   try:
     contest = client.database.get_contest(contest_name)
     player_team = contest.get_team_of_user(interaction.user.id)
