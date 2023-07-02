@@ -567,7 +567,22 @@ async def db_del(interaction, key: str):
     await interaction.response.send_message(f"Deleted {key}.")
   except DataAPIException:
     await interaction.response.send_message(
-      "Error fetching data. Are you sure the key exists?",
+      "DataAPIException. Are you sure the key exists?",
+      ephemeral=True
+    )
+
+@db_group.command(name="keys")
+@app_commands.check(is_admin)
+async def db_keys(interaction):
+  try:
+    await interaction.response.send_message(
+      str(client.database.storageAPI.getKeys()),
+      ephemeral=True
+    )
+
+  except DataAPIException:
+    await interaction.response.send_message(
+      "DataAPIException.",
       ephemeral=True
     )
 

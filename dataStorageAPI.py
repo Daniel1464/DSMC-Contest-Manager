@@ -8,6 +8,17 @@ class DataStorageAPI:
     self.session = requests.Session()
     self.session.get("https://data-storage-system.danielchen1464.repl.co")
 
+  def getKeys(self):
+    req = self.session.get(
+      "https://data-storage-system.danielchen1464.repl.co/get_keys?password={passcode}"
+        .format(passcode = os.environ[self.passwordStringKey])
+      )
+
+    if req.ok:
+      return str(req.content)
+    else:
+      raise DataAPIException
+
   def getValue(self,key: str,evaluate: bool = False):
     data = self.session.get("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key))
     if str(data) == "<Response [200]>":
