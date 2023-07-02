@@ -1,11 +1,8 @@
 from dotenv import load_dotenv
-load_dotenv()
+# load_dotenv()
 
 import os
 import discord
-import ast
-from subprocess import call
-import requests
 from discord import app_commands
 
 from contest import Contest
@@ -177,11 +174,11 @@ async def invite_more_members(interaction, contest_name: str, member_one: discor
 
     if member_two != None:
       contest.get_team_of_user(interaction.user.id).inviteMember(member_two.id)
-      message += "{memberName} has been successfully added. \n".format(memberID = member_two.name)
+      message += "{memberName} has been successfully added. \n".format(memberName = member_two.name)
 
     if member_three != None:
       contest.get_team_of_user(interaction.user.id).inviteMember(member_three.id)
-      message += "{memberName} has been successfully added. \n".format(memberID = member_three.name)
+      message += "{memberName} has been successfully added. \n".format(memberName = member_three.name)
     client.database.update_contest(contest)
     await interaction.response.send_message(message)
   except:
