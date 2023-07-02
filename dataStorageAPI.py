@@ -26,7 +26,7 @@ class DataStorageAPI:
 
     if res.ok:
       if evaluate:
-        # the [2:-1] is nessecary because all content comes out like b'something_here', and the [2:-1] removes all of that.
+        # the [2:-1] is necessary because all content comes out like b'something_here', and the [2:-1] removes all of that.
         # .strip removes the pesky newline characters from the string
         return ast.literal_eval(res.content.decode("utf-8").strip())
       else:

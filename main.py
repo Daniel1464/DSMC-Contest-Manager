@@ -47,7 +47,7 @@ async def on_ready():
 
 @tree.error
 async def on_app_command_error(interaction, error):
-  await interaction.response.send_message("Sorry, there was a problem with the bot, so an uncaught error has occured. Please consult @DanielRocksUrMom for help.")
+  await interaction.response.send_message("Sorry, there was a problem with the bot, so an uncaught error has occurred. Please consult @DanielRocksUrMom for help.")
   daniel = client.get_user(614549755342880778)
   channel = await daniel.create_dm()
   await channel.send("Hey Daniel, the user '{errorCauserName}' just caused an error in your code.'".format(errorCauserName = interaction.user.name))
@@ -149,7 +149,7 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
     try:
       await interaction.response.send_message("You seem to be in another team as of now. The team that you currently are in is {teamName}.".format(teamName = contest.get_team_of_user(interaction.user.id)))
     except:
-      await interaction.response.send_message("Oh no.... something seriously wrong has occured. Please consult @DanielRocksUrMom for follow up(Error: Member is in another team exception has been thrown, but the user hasn't joined a team yet.")
+      await interaction.response.send_message("Oh no.... something seriously wrong has occurred. Please consult @DanielRocksUrMom for follow up(Error: Member is in another team exception has been thrown, but the user hasn't joined a team yet.")
 
 
 @tree.command(name = "invite_more_members", description = "Invites more members to your team", guild=discord.Object(id=current_guild_id))
@@ -196,7 +196,7 @@ async def join_team(interaction, contest_name: str, team_name: str):
 
   try:
     contest.get_team(team_name).addMember(interaction.user.id)
-    await interaction.response.send_message("Horray! You have officially joined team {teamName}! to leave, use /leave_current_team.".format(teamName = team_name))
+    await interaction.response.send_message("Hooray! You have officially joined team {teamName}! to leave, use /leave_current_team.".format(teamName = team_name))
     client.database.update_contest(contest)
   except MemberNotInvitedException:
     await interaction.response.send_message("Hmmm.... It seems that you haven't been invited to this team.", ephemeral = True)
@@ -241,7 +241,7 @@ async def leave_current_team(interaction, contest_name: str):
       await interaction.response.send_message("Looks like something went wrong. Please contact @DanielRocksUrMom to follow up with him(Error code 1)")
 
 
-# unstested
+# untested
 @tree.command(name = "transfer_ownership", description = "If you are the owner of a team, transfers ownership to another person within your team.", guild=discord.Object(id=current_guild_id))
 @app_commands.autocomplete(contest_name=getContestNames)
 async def transfer_ownership(interaction, contest_name: str, new_owner: discord.Member):
@@ -251,7 +251,7 @@ async def transfer_ownership(interaction, contest_name: str, new_owner: discord.
     if interaction.user.id == player_team.ownerID:
       player_team.transfer_ownership(new_owner.id)
       client.database.update_contest(contest)
-      await interaction.response.send_message("Ownership has been successfully transfered to {newOwner}!".format(newOwner = new_owner))
+      await interaction.response.send_message("Ownership has been successfully transferred to {newOwner}!".format(newOwner = new_owner))
     else:
       await interaction.response.send_message("Sorry, you're not the owner of the team you're in, so you cannot transfer ownership.", ephemeral = True)
   except MemberNotInTeamException:
@@ -454,7 +454,7 @@ async def team_rankings(interaction, contest_name: str):
     try:
       await interaction.response.send_message(rankingString)
     except:
-      await interaction.response.send_message("Oops... Looks like there isn't any teams left in this competition. Hopefully, this is a glitch(everybody leaving DSMC would be really sadge). ")
+      await interaction.response.send_message("Oops... Looks like there isn't any teams left in this competition. Hopefully, this is a glitch (everybody leaving DSMC would be really sadge).")
   except WrongPeriodException:
     await interaction.response.send_message("The competition hasn't started yet, and thus there aren't any rankings. Use /all_teams to get a list of every team.")
 
@@ -544,7 +544,7 @@ async def db_keys(interaction):
 
 tree.add_command(db_group)
 
-# Description of all of the nessecary commands
+# Description of all of the necessary commands
 
 # create Contest - ADMIN
 
