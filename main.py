@@ -50,13 +50,16 @@ async def on_ready():
 @tree.error
 async def on_app_command_error(interaction, error):
   await interaction.response.send_message("Sorry, there was a problem with the bot, so an uncaught error has occured. Please consult @DanielRocksUrMom for help.")
-  # this is my user ID
   daniel = client.get_user(614549755342880778)
   channel = await daniel.create_dm()
-  # dms me about the error
-  await channel.send("Hey Daniel, the user '{errorCauserName}' just caused an error in your code. Here is the error: \n '{error}'".format(errorCauserName = interaction.user.name, error = traceback.format_exc()))
-  # rethrows the error
-  logging.warning(traceback.format_exc())
+  await channel.send("Hey Daniel, the user '{errorCauserName}' just caused an error in your code.'".format(errorCauserName = interaction.user.name))
+  error = traceback.format_exc()
+  with open('errors.txt','w') as file:
+    file.write(error)
+
+  with open('errors.txt','rb') as file:
+    await channel.send("This is the error file: ", file = discord.File(file,"errors.txt"))
+  logging.warning(error)
 
 
 

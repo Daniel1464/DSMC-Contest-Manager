@@ -12,7 +12,9 @@ class DataStorageAPI:
     data = self.session.get("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key))
     if str(data) == "<Response [200]>":
       if evaluate:
-        return ast.literal_eval(str(data.content)[2:-1])
+        # the [2:-1] is nessecary because all content comes out like b'something_here', and the [2:-1] removes all of that.
+        # .strip removes the pesky newline characters from the string
+        return ast.literal_eval(str(data.content).strip()[2:-1])
       else:
         return data.content[2:-1]
     else:
