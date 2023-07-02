@@ -28,7 +28,7 @@ class ContestDatabase:
     teams_data = [team.getData() for team in contest.all_teams]
 
     allContestNames = self.storageAPI.getValue("all-contest-names",evaluate = True)
-    if not (contest.name in allContestNames):
+    if contest.name not in allContestNames:
       allContestNames.append(contest.name)
       self.storageAPI.setValue("all-contest-names",allContestNames)
 

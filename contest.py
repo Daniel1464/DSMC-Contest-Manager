@@ -13,21 +13,21 @@ class Contest:
     self.link = link
     self.teamSizeLimit = teamSizeLimit
     self.totalTeamsLimit = totalTeamsLimit
-    
+
     # used to keep track who submitted first, second, third, etc.
     self.teamSubmitOrder = 1
 
     # used to keep track of which period the contest is currently in
     self.period = ContestPeriod.preSignup
 
-  
+
     self.__questions = questions
     self.__teams = teams
 
-    
+
     self.channelIDInfo = {}
 
-    
+
 
     # note: self represents the contest instance below.
     # this code essentially checks if the list of questions is in fact a list of data dicts, and converts them into their respective objects
@@ -41,10 +41,10 @@ class Contest:
   def all_contest_participants(self) -> list:
     ids = []
     for team in self.__teams:
-      if not team.ownerID in ids:
+      if team.ownerID not in ids:
         ids.append(team.ownerID)
       for memberID in team.memberIDs:
-        if not memberID in ids:
+        if memberID not in ids:
           ids.append(memberID)
     return ids
 
@@ -53,7 +53,7 @@ class Contest:
     ids = []
     for team in self.__teams:
       for memberID in team.invitedMemberIDs:
-        if not memberID in ids:
+        if memberID not in ids:
           ids.append(memberID)
     return ids
 
@@ -75,18 +75,18 @@ class Contest:
   @property
   def total_problems(self) -> int:
     return len(self.all_questions)
-    
+
 
   def add_question(self, question: Question, questionNumber: int = None):
     if self.period == ContestPeriod.preSignup or self.period == ContestPeriod.signup:
-      if questionNumber == None:
+      if questionNumber is None:
         self.__questions.append(question)
       else:
         self.__questions.insert(questionNumber-1,question)
     else:
       raise WrongPeriodException([ContestPeriod.preSignup,ContestPeriod.signup])
       return
-      
+
 
   # How these lines of code work:
   # Essentially, @singledispatch allows the remove_question function
@@ -113,16 +113,16 @@ class Contest:
     except:
       raise IndexError
 
-  
-  
+
+
   @property
   def all_questions(self): return self.__questions
 
-  
+
 
   def add_team(self, newTeam: Team):
     if self.period == ContestPeriod.signup:
-      if self.totalTeamsLimit == None or len(self.__teams) < self.totalTeamsLimit:
+      if self.totalTeamsLimit is None or len(self.__teams) < self.totalTeamsLimit:
         for team in self.__teams:
           if team.name == newTeam.name:
             raise TeamNameException

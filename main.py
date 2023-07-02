@@ -136,9 +136,9 @@ async def all_contest_competitors(interaction,contest_name:str):
 async def register_team(interaction, contest_name: str, team_name: str, member_two: discord.Member = None, member_three: discord.Member = None, member_four: discord.Member = None):
 
   inviteList = []
-  if member_two != None: inviteList.append(member_two)
-  if member_three != None: inviteList.append(member_three)
-  if member_four != None: inviteList.append(member_four)
+  if member_two is not None: inviteList.append(member_two)
+  if member_three is not None: inviteList.append(member_three)
+  if member_four is not None: inviteList.append(member_four)
 
   contest = client.database.get_contest(contest_name)
 
@@ -169,15 +169,15 @@ async def invite_more_members(interaction, contest_name: str, member_one: discor
   contest = client.database.get_contest(contest_name)
   message = ""
   try:
-    if member_one != None:
+    if member_one is not None:
       contest.get_team_of_user(interaction.user.id).inviteMember(member_one.id)
       message += "{memberName} has been successfully added. \n".format(memberName = member_one.name)
 
-    if member_two != None:
+    if member_two is not None:
       contest.get_team_of_user(interaction.user.id).inviteMember(member_two.id)
       message += "{memberName} has been successfully added. \n".format(memberName = member_two.name)
 
-    if member_three != None:
+    if member_three is not None:
       contest.get_team_of_user(interaction.user.id).inviteMember(member_three.id)
       message += "{memberName} has been successfully added. \n".format(memberName = member_three.name)
     client.database.update_contest(contest)
@@ -252,7 +252,7 @@ async def modify_total_teams_limit(interaction, contest_name: str, teams_limit: 
 async def leave_current_team(interaction, contest_name: str):
   contest = client.database.get_contest(contest_name)
   user_team = contest.get_team_of_user(interaction.user.id)
-  if user_team == None:
+  if user_team is None:
     await interaction.response.send_message("Hmmm... You don't seem to be in a team as of now.",ephemeral = True)
   else:
     try:
@@ -296,7 +296,7 @@ async def unregister_team(interaction, contest_name: str):
 
   user_team = contest.get_team_of_user(interaction.user.id)
 
-  if user_team == None:
+  if user_team is None:
     await interaction.response.send_message("Hmm.... You don't seem to be in a team as of now.", ephemeral = True)
   elif user_team.ownerID != interaction.user.id:
     await interaction.response.send_message("Holdup! You can't delete this team, as it was created by someone else. Ask the creator to delete the team. If you want to leave, use /leave_current_team.", ephemeral = True)
@@ -317,7 +317,7 @@ async def unregister_team(interaction, contest_name: str):
 async def add_question(interaction, contest_name: str, answer: float, points: int, problem_number: int = None):
   contest = client.database.get_contest(contest_name)
   try:
-    if problem_number == None:
+    if problem_number is None:
       contest.add_question(Question(contest,answer,points))
     else:
       contest.add_question(Question(contest,answer,points),problem_number)

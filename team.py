@@ -4,10 +4,10 @@ from contestPeriod import ContestPeriod
 
 
 class Team:
-    
+
   def __init__(self,contestInstance, name:str, ownerID: int, memberIDs: list = [], invitedMemberIDs: list = []):
     from contest import Contest
-    if contestInstance.teamSizeLimit != None and len(memberIDs) > contestInstance.teamSizeLimit:
+    if contestInstance.teamSizeLimit is not None and len(memberIDs) > contestInstance.teamSizeLimit:
       raise TeamSizeExceededException
     else:
       self.submitRanking = 0
@@ -25,7 +25,7 @@ class Team:
 
   def memberInvitedToTeam(self,memberID: int) -> bool:
     return memberID in self.invitedMemberIDs
-    
+
 
   def inviteMember(self,memberID: int):
     self.invitedMemberIDs.append(memberID)
@@ -35,18 +35,18 @@ class Team:
       self.invitedMemberIDs.remove(memberID)
     except:
       raise MemberNotInTeamException
-  
+
   def addMember(self,memberID: int):
 
-    if not memberID in self.invitedMemberIDs:
+    if memberID not in self.invitedMemberIDs:
       raise MemberNotInvitedException
       return
-    
+
     if memberID in self.contestInstance.all_contest_participants:
       raise MemberInAnotherTeamException
       return
-    
-    if self.contestInstance.teamSizeLimit == None or len(self.memberIDs) < self.contestInstance.teamSizeLimit:
+
+    if self.contestInstance.teamSizeLimit is None or len(self.memberIDs) < self.contestInstance.teamSizeLimit:
       self.memberIDs.append(memberID)
     else:
       raise TeamSizeExceededException
@@ -64,7 +64,7 @@ class Team:
       if self.answersSubmitted:
         raise AnswersAlreadySubmittedException
         return
-      
+
       if question.isCorrect(answer):
         self.answerScore[question.getNumber()] = question.pointValue
       else:
@@ -86,14 +86,14 @@ class Team:
       self.memberIDs.remove(newOwnerID)
       self.ownerID = newOwnerID
     else:
-      raise MemberNotInTeamException 
+      raise MemberNotInTeamException
 
 
   @property
   def totalPoints(self) -> int:
     if not self.answersSubmitted:
       return 0
-    
+
     total = 0
     for problemNumber in self.answerScore.keys():
       total += self.answerScore[problemNumber]
