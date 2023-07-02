@@ -1,10 +1,5 @@
-from functools import singledispatch
-import ast
-
-
 class Question:
   def __init__(self, contestInstance, correctAnswer: float, pointValue: int):
-    from contest import Contest
     self.contestInstance = contestInstance
     self.correctAnswer = correctAnswer
     self.pointValue = pointValue

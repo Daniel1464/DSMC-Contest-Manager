@@ -1,4 +1,3 @@
-from functools import singledispatch
 from contestPeriod import ContestPeriod
 
 from customExceptions import (
@@ -14,7 +13,6 @@ from customExceptions import (
 
 class Team:
   def __init__(self, contestInstance, name: str, ownerID: int, memberIDs: list = [], invitedMemberIDs: list = []):
-    from contest import Contest
     if contestInstance.teamSizeLimit is not None and len(memberIDs) > contestInstance.teamSizeLimit:
       raise TeamSizeExceededException
     else:
