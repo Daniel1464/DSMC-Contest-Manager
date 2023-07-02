@@ -49,11 +49,11 @@ async def on_app_command_error(interaction, error):
   channel = await daniel.create_dm()
   await channel.send("Hey Daniel, the user '{errorCauserName}' just caused an error in your code.'".format(errorCauserName = interaction.user.name))
   error = traceback.format_exc()
-  with open('errors.txt', 'w') as file:
+  with open('errors.log', 'w') as file:
     file.write(error)
 
-  with open('errors.txt', 'rb') as file:
-    await channel.send("This is the error file: ", file = discord.File(file, "errors.txt"))
+  with open('errors.log', 'rb') as file:
+    await channel.send("This is the error file: ", file = discord.File(file, "errors.log"))
   logging.warning(error)
 
 '''
