@@ -8,8 +8,8 @@ class ContestDatabase:
   def get_all_contest_names(self):
     return self.storageAPI.getValue(key="all-contest-names",evaluate=True)
 
-  
-    
+
+
   def update_contest(self, contest: Contest):
 
     # when we do str(contest.period), it will return ContestPeriod.(SomePeriod)
@@ -26,27 +26,24 @@ class ContestDatabase:
     }
     questions_data = [question.getData() for question in contest.all_questions]
     teams_data = [team.getData() for team in contest.all_teams]
-    
+
     allContestNames = self.storageAPI.getValue("all-contest-names",evaluate = True)
     if not (contest.name in allContestNames):
       allContestNames.append(contest.name)
       self.storageAPI.setValue("all-contest-names",allContestNames)
-    
+
     self.storageAPI.setValue("{contest}-INFO:".format(contest = contest.name), contest_information)
     self.storageAPI.setValue("{contest}-QUESTIONS:".format(contest = contest.name),questions_data)
     self.storageAPI.setValue("{contest}-TEAMS:".format(contest = contest.name),teams_data)
 
 
-  
+
 
   def get_contest(self,name:str) -> Contest:
     contest_information = self.storageAPI.getValue(key = "{contest}-INFO:".format(contest = name), evaluate = True)
-    print(contest_information)
     questions_data = self.storageAPI.getValue(key = "{contest}-QUESTIONS:".format(contest = name), evaluate = True)
-    print(questions_data)
     teams_data = self.storageAPI.getValue(key = "{contest}-TEAMS:".format(contest = name), evaluate = True)
-    print(teams_data)
-    
+
     # a special property of enums is that if you do ContestPeriod["preSignup"],
     # it"ll return ContestPeriod.preSignup, the enum that we want.
     contest = Contest(contest_information["name"],
@@ -68,10 +65,3 @@ class ContestDatabase:
     all_contest_names = self.storageAPI.getValue("all-contest-names",evaluate=True)
     all_contest_names.remove(contestName)
     self.storageAPI.setValue("all-contest-names",all_contest_names)
-    
-    
-  
-
-
-    
-    

@@ -15,7 +15,8 @@ from contestDatabase import ContestDatabase
 from customExceptions import *
 from contestPeriod import ContestPeriod
 
-
+import traceback
+import logging
 
 
 
@@ -169,11 +170,11 @@ async def invite_more_members(interaction, contest_name: str, member_one: discor
     if member_one != None:
       contest.get_team_of_user(interaction.user.id).inviteMember(member_one.id)
       message += "{memberName} has been successfully added. \n".format(memberName = member_one.name)
-  
+
     if member_two != None:
       contest.get_team_of_user(interaction.user.id).inviteMember(member_two.id)
       message += "{memberName} has been successfully added. \n".format(memberID = member_two.name)
-  
+
     if member_three != None:
       contest.get_team_of_user(interaction.user.id).inviteMember(member_three.id)
       message += "{memberName} has been successfully added. \n".format(memberID = member_three.name)
