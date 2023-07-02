@@ -44,6 +44,7 @@ current_guild_id = 624314920158232616
 async def on_ready():
   client.database = ContestDatabase('password')
   client.something = 0
+  print(await tree.sync())
   print(await tree.sync(guild=discord.Object(id=current_guild_id)))
   print("Ready!")
 
@@ -528,6 +529,49 @@ async def delete_contest(interaction, contest_name: str):
   client.database.delete_contest(contest_name)
   await interaction.response.send_message("Contest has been deleted!")
 
+
+def is_admin(interaction: discord.Interaction):
+  return interaction.user.id in [614549755342880778, 757741186432630884]
+
+db_group = app_commands.Group(name="db", description="[Bot administrators only]")
+
+@db_group.command(name="get")
+@app_commands.check(is_admin)
+async def db_get(interaction: discord.Interaction, key: str):
+  try:
+    value = client.database.storageAPI.getValue(key, evaluate=True)
+    await interaction.response.send_message(str(value), ephemeral=True)
+  except DataAPIException:
+    await interaction.response.send_message(
+      "DataAPIException. Are you sure the key exists?",
+      ephemeral=True
+    )
+
+@db_group.command(name="set")
+@app_commands.check(is_admin)
+async def db_set(interaction, key: str, value: str):
+  try:
+    client.database.storageAPI.setValue(key, value)
+    await interaction.response.send_message(f"Set {key} to {value}.")
+  except DataAPIException:
+    await interaction.response.send_message(
+      "DataAPIException.",
+      ephemeral=True
+    )
+
+@db_group.command(name="del")
+@app_commands.check(is_admin)
+async def db_del(interaction, key: str):
+  try:
+    client.database.storageAPI.delValue(key)
+    await interaction.response.send_message(f"Deleted {key}.")
+  except DataAPIException:
+    await interaction.response.send_message(
+      "Error fetching data. Are you sure the key exists?",
+      ephemeral=True
+    )
+
+tree.add_command(db_group)
 
 # Description of all of the nessecary commands
 
