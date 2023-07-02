@@ -17,7 +17,7 @@ def killContainer():
   # credits: https://stackoverflow.com/users/4279/jfs
   with open('killcontainer.sh', 'rb') as file:
       script = file.read()
-  rc = call(script, shell=True)
+  call(script, shell=True)
   return "Success."
 
 

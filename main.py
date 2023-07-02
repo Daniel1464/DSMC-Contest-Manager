@@ -274,7 +274,7 @@ async def unregister_team(interaction, contest_name: str):
     contest.remove_team(user_team)
     for memberID in user_team.memberIDs:
       channel = await interaction.guild.get_member(memberID).create_dm()
-      await channel.send("The original owner of team {teamName} has deleted this team. To sign up for another team, ask another team owner to invite you, then use /join.".format(user = interaction.user, contestName = contest.name, teamName = user_team.name))
+      await channel.send("The original owner of team {teamName} has deleted this team. To sign up for another team, ask another team owner to invite you, then use /join.".format(teamName = user_team.name))
     await interaction.response.send_message("Success!")
     client.database.update_contest(contest)
 
