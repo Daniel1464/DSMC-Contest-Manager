@@ -41,7 +41,8 @@ current_guild_id = 624314920158232616
 async def on_ready():
   client.database = ContestDatabase('password')
   client.something = 0
-  print(await tree.sync())
+  # we don't want to sync the entire tree, that's going to make the bot start up very slowly
+  #print(await tree.sync())
   print(await tree.sync(guild=discord.Object(id=current_guild_id)))
   print("Ready!")
 
@@ -216,6 +217,7 @@ async def join_team(interaction, contest_name:str, team_name:str):
     await interaction.response.send_message("Hmmm.... It seems that you haven't been invited to this team.", ephemeral = True)
   except MemberInAnotherTeamException:
     await interaction.response.send_message("You've already joined another team! Use /leave_current_team to leave your current team, then use /join_team to join this one.", ephemeral = True)
+
 
 
 

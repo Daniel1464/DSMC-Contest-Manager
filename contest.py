@@ -154,7 +154,7 @@ class Contest:
 
   def get_team(self,teamName: str) -> Team:
     for team in self.__teams:
-      if team.name == teamName:
+      if team.name.lower() == teamName.lower():
         return team
     raise TeamNotInContestException
     return

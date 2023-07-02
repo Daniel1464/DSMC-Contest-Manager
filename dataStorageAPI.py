@@ -15,7 +15,7 @@ class DataStorageAPI:
       )
 
     if res.ok:
-      return str(res.content)
+      return res.content.decode("utf-8")
     else:
       raise DataAPIException
 
@@ -26,9 +26,9 @@ class DataStorageAPI:
       if evaluate:
         # the [2:-1] is nessecary because all content comes out like b'something_here', and the [2:-1] removes all of that.
         # .strip removes the pesky newline characters from the string
-        return ast.literal_eval(str(res.content).strip()[2:-1])
+        return ast.literal_eval(res.content.decode("utf-8").strip())
       else:
-        return res.content[2:-1]
+        return res.content.decode("utf-8")
     else:
       raise DataAPIException
       return
@@ -39,7 +39,7 @@ class DataStorageAPI:
     res = self.session.post("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key), data = {"value":input})
 
     if res.ok:
-      return res.content[2:-1]
+      return res.content.decode("utf-8")
     else:
       raise DataAPIException
 
@@ -47,6 +47,6 @@ class DataStorageAPI:
     res = self.session.get("https://data-storage-system.danielchen1464.repl.co/delete_key?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key))
 
     if res.ok:
-      return res.content[2:-1]
+      return res.content.decode("utf-8")
     else:
       raise DataAPIException
