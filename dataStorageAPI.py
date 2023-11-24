@@ -1,10 +1,14 @@
 import ast
 import requests
 import os
-from customExceptions import DataAPIException
+
+class DataAPIException(Exception):
+  def __init__(self):
+    super().__init__("There was an issue with the Data API. Check it's page for the specific error.")
 
 
 class DataStorageAPI:
+  # passwordStringKey represents the ENV variable key.
   def __init__(self, passwordStringKey: str = "password"):
     self.passwordStringKey = passwordStringKey
     self.session = requests.Session()
@@ -26,7 +30,6 @@ class DataStorageAPI:
 
     if res.ok:
       if evaluate:
-        # the [2:-1] is necessary because all content comes out like b'something_here', and the [2:-1] removes all of that.
         # .strip removes the pesky newline characters from the string
         return ast.literal_eval(res.content.decode("utf-8").strip())
       else:
@@ -46,9 +49,10 @@ class DataStorageAPI:
       raise DataAPIException
 
   def delValue(self, key: str):
+    
     res = self.session.get("https://data-storage-system.danielchen1464.repl.co/delete_key?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key))
 
     if res.ok:
       return res.content.decode("utf-8")
-    else:
+    else:  
       raise DataAPIException

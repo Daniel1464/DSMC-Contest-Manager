@@ -26,10 +26,6 @@ class MemberNotInTeamException(Exception):
     super().__init__("This member is not in the team specified.")
 
 
-class DataAPIException(Exception):
-  def __init__(self):
-    super().__init__("There was an issue with the Data API. Check it's page for the specific error.")
-
 
 class AnswersAlreadySubmittedException(Exception):
   def __init__(self):

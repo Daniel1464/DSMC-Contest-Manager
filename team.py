@@ -23,7 +23,7 @@ class Team:
       self.ownerID = ownerID
       self.memberIDs = memberIDs
       self.invitedMemberIDs = invitedMemberIDs
-      self.answerScore = {}
+      self.answerScore: dict = {}
 
   def memberInTeam(self, memberID: int) -> bool:
     return memberID == self.ownerID or memberID in self.memberIDs

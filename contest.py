@@ -14,7 +14,8 @@ from contestPeriod import ContestPeriod
 
 
 class Contest:
-  def __init__(self, name: str, link: str, teamSizeLimit: int = None, totalTeamsLimit: int = None, questions: list = [], teams: list = []):
+  # Here, questions and teams represent the questions and teams in dict form.
+  def __init__(self, name: str, link: str, teamSizeLimit: int | None = None, totalTeamsLimit: int | None = None, questions: list[Question] = [], teams: list[Team] = []):
     self.name = name
     self.link = link
     self.teamSizeLimit = teamSizeLimit
@@ -29,7 +30,7 @@ class Contest:
     self.__questions = questions
     self.__teams = teams
 
-    self.channelIDInfo = {}
+    self.channelIDInfo: dict = {}
 
     # note: self represents the contest instance below.
     # this code essentially checks if the list of questions is in fact a list of data dicts, and converts them into their respective objects
@@ -76,7 +77,7 @@ class Contest:
   def total_problems(self) -> int:
     return len(self.all_questions)
 
-  def add_question(self, question: Question, questionNumber: int = None):
+  def add_question(self, question: Question, questionNumber: int | None = None):
     if self.period == ContestPeriod.preSignup or self.period == ContestPeriod.signup:
       if questionNumber is None:
         self.__questions.append(question)
@@ -155,13 +156,13 @@ class Contest:
     raise TeamNotInContestException
     return
 
-  def get_team_of_user(self, userID: int) -> Team:
+  def get_team_of_user(self, userID: int) -> Team | None:
     for team in self.__teams:
       if team.memberInTeam(userID):
         return team
     return None
 
-  def get_winner(self) -> Team:
+  def get_winner(self) -> Team | None:
     if self.period == ContestPeriod.competition or self.period == ContestPeriod.postCompetition:
       topRankedTeam = self.team_rankings[0]
       if topRankedTeam.answersSubmitted:

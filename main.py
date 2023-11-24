@@ -9,15 +9,17 @@ from contestDatabase import ContestDatabase
 from contestPeriod import ContestPeriod
 from dotenv import load_dotenv
 
+from dataStorageAPI import DataAPIException
+
 from customExceptions import (
   AnswersAlreadySubmittedException,
-  DataAPIException,
   MemberInAnotherTeamException,
   MemberNotInTeamException,
   MemberNotInvitedException,
   OwnerLeaveTeamException,
   WrongPeriodException
 )
+from running import running
 
 import traceback
 import logging
@@ -44,7 +46,11 @@ async def on_ready():
 
 @tree.error
 async def on_app_command_error(interaction, error):
-  await interaction.response.send_message("Sorry, there was a problem with the bot, so an uncaught error has occurred. Please consult @DanielRocksUrMom for help.")
+  if isinstance(error.original, DataAPIException):
+    await interaction.response.send_message("A data API issue has just occured. This could be a typo from one of the textboxes, or a problem with the bot. Please consult one of the test proctors and/or @DanielRocksUrMom for help. ")
+  else:
+    await interaction.response.send_message("Sorry, there was a problem with the bot, so an uncaught error has occurred. Please consult @DanielRocksUrMom for help.")
+
   daniel = client.get_user(614549755342880778)
   channel = await daniel.create_dm()
   await channel.send("Hey Daniel, the user '{errorCauserName}' just caused an error in your code.'".format(errorCauserName = interaction.user.name))
@@ -55,39 +61,6 @@ async def on_app_command_error(interaction, error):
   with open('errors.log', 'rb') as file:
     await channel.send("This is the error file: ", file = discord.File(file, "errors.log"))
   logging.warning(error)
-
-'''
-@tree.command(name = "hello", description = "My first application Command", guild=discord.Object(id=current_guild_id))
-async def first_command(interaction):
-  await interaction.response.send_message("Hello!")
-
-
-
-
-# unimportant test command.
-@tree.command(name = "signin", description = "Signin test", guild=discord.Object(id=current_guild_id))
-async def signin(interaction,thing_to_say: str, colors: str):
-  await interaction.response.send_message(thing_to_say + str(client.something) + str(interaction.user))
-  client.something += 1
-
-@signin.autocomplete("colors")
-async def rps_autocomplete(
-        interaction: discord.Interaction,
-        current: str,
-    ) -> list[app_commands.Choice[str]]:
-        choices = ['Rock', 'Paper', 'Scissors']
-        return [
-            app_commands.Choice(name=choice, value=choice)
-            for choice in choices if current.lower() in choice.lower()
-        ]
-
-'''
-
-'''
-@tree.command(name = "testtest",description="temporary test", guild=discord.Object(id=current_guild_id))
-async def test(interaction):
-  await interaction.response.send_message("works!")
-'''
 
 
 # functional
@@ -572,4 +545,5 @@ tree.add_command(db_group)
 # team rankings
 
 # DO NOT DELETE THESE LINES OF CODE:
+running()
 client.run(os.getenv('token'))
