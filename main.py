@@ -19,7 +19,7 @@ from customExceptions import (
   OwnerLeaveTeamException,
   WrongPeriodException
 )
-from running import running
+# from running import running
 
 import traceback
 import logging
@@ -545,5 +545,4 @@ tree.add_command(db_group)
 # team rankings
 
 # DO NOT DELETE THESE LINES OF CODE:
-running()
 client.run(os.getenv('token'))
