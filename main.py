@@ -173,6 +173,20 @@ async def join_team(interaction, contest_name: str, team_name: str):
   except MemberInAnotherTeamException:
     await interaction.response.send_message("You've already joined another team! Use /leave_current_team to leave your current team, then use /join_team to join this one.", ephemeral = True)
 
+@tree.command(name = "change_team_name", description = "Change the name of the team you are in.", guild=discord.Object(id=current_guild_id))
+@app_commands.autocomplete(contest_name=getContestNames)
+async def change_team_name(interaction, contest_name: str, new_team_name: str):
+  contest = client.database.get_contest(contest_name)
+  team = contest.get_team_of_user(interaction.user.id)
+  if team is not None:
+    previousname = team.name
+    team.name = new_team_name
+    client.database.update_contest(contest)
+    await interaction.response.send_message(
+      "The team that was previously refferred to as '" +
+      previousname + "' now has the name '" + team.name + "'.")
+  else:
+    await interaction.response.send_message("It seems that you are not in a team currently.", ephemeral = True)
 
 @tree.command(name = "modify_team_size_limit", description = "MOD ONLY. Modifies the team size limit for a contest. ", guild=discord.Object(id=current_guild_id))
 @app_commands.autocomplete(contest_name=getContestNames)
