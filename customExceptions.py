@@ -1,5 +1,11 @@
 from contestPeriod import ContestPeriod
 
+class BadEnvironmentalVarException(Exception):
+  def __init__(self, keyName: str):
+    super().__init__(
+      "You tried to access an ENV var that either wasn't defined, or wasn't defined properly. " +
+      "\n Remember to set up the 'token' and 'password' ENVs!!!!!!"
+    )
 
 class TeamNameException(Exception):
   def __init__(self):

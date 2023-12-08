@@ -1,4 +1,3 @@
-import os
 import discord
 from discord import app_commands
 
@@ -7,7 +6,7 @@ from team import Team
 from question import Question
 from contestDatabase import ContestDatabase
 from contestPeriod import ContestPeriod
-from dotenv import load_dotenv
+from getenv import getenv
 
 from dataStorageAPI import DataAPIException
 
@@ -19,12 +18,9 @@ from customExceptions import (
   OwnerLeaveTeamException,
   WrongPeriodException
 )
-# from running import running
 
 import traceback
 import logging
-
-load_dotenv()
 
 # TODO: Fix channel creation!(Still kinda scuffed rn, channels aren't being deleted)
 
@@ -40,7 +36,6 @@ current_guild_id = 624314920158232616
 @client.event
 async def on_ready():
   client.database = ContestDatabase('password')
-  client.something = 0
   print("Ready!")
 
 
@@ -52,11 +47,14 @@ async def on_app_command_error(interaction, error):
     await interaction.response.send_message("Sorry, there was a problem with the bot, so an uncaught error has occurred. Please consult @DanielRocksUrMom for help.")
 
   daniel = client.get_user(614549755342880778)
-  channel = await daniel.create_dm()
-  await channel.send("Hey Daniel, the user '{errorCauserName}' just caused an error in your code.'".format(errorCauserName = interaction.user.name))
-  error = traceback.format_exc()
-  with open('errors.log', 'w') as file:
-    file.write(error)
+  if daniel is not None:
+    channel = await daniel.create_dm()
+    await channel.send("Hey Daniel, the user '{errorCauserName}' just caused an error in your code.'".format(errorCauserName = interaction.user.name))
+    error = traceback.format_exc()
+    with open('errors.log', 'w') as file:
+      file.write(error)
+  else:
+    print("Failed to write to disk.")
 
   with open('errors.log', 'rb') as file:
     await channel.send("This is the error file: ", file = discord.File(file, "errors.log"))
@@ -559,4 +557,5 @@ tree.add_command(db_group)
 # team rankings
 
 # DO NOT DELETE THESE LINES OF CODE:
-client.run(os.getenv('token'))
+client.run(getenv("token"))
+  

@@ -1,6 +1,6 @@
 import ast
 import requests
-import os
+from getenv import getenv
 
 class DataAPIException(Exception):
   def __init__(self):
@@ -17,17 +17,15 @@ class DataStorageAPI:
   def getKeys(self):
     res = self.session.get(
       "https://data-storage-system.danielchen1464.repl.co/get_keys?password={passcode}"
-      .format(passcode = os.environ[self.passwordStringKey])
+      .format(passcode = getenv(self.passwordStringKey))
     )
-
     if res.ok:
       return res.content.decode("utf-8")
     else:
       raise DataAPIException
 
   def getValue(self, key: str, evaluate: bool = False):
-    res = self.session.get("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key))
-
+    res = self.session.get("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = getenv(self.passwordStringKey), inputKey = key))
     if res.ok:
       if evaluate:
         # .strip removes the pesky newline characters from the string
@@ -40,9 +38,7 @@ class DataStorageAPI:
 
   def setValue(self, key: str, value):
     input = str(value)
-
-    res = self.session.post("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key), data = {"value": input})
-
+    res = self.session.post("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = getenv(self.passwordStringKey), inputKey = key), data = {"value": input})
     if res.ok:
       return res.content.decode("utf-8")
     else:
@@ -50,7 +46,7 @@ class DataStorageAPI:
 
   def delValue(self, key: str):
     
-    res = self.session.get("https://data-storage-system.danielchen1464.repl.co/delete_key?password={passcode}&key={inputKey}".format(passcode = os.environ[self.passwordStringKey], inputKey = key))
+    res = self.session.get("https://data-storage-system.danielchen1464.repl.co/delete_key?password={passcode}&key={inputKey}".format(passcode = getenv(self.passwordStringKey), inputKey = key))
 
     if res.ok:
       return res.content.decode("utf-8")
