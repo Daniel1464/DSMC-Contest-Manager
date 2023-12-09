@@ -1,5 +1,5 @@
 __pycache__/
-venv/
 .breakpoints
 .env
 *.log
+mypy.ini
