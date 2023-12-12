@@ -100,7 +100,7 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
   contest = database.get_contest(contest_name)
 
   try:
-    newTeam = Team(contestInstance = contest, name = team_name, ownerID = interaction.user.id, invitedMemberIDs = [member.id for member in inviteList])
+    newTeam = Team(contest_instance = contest, name = team_name, owner_id = interaction.user.id, invited_member_ids = [member.id for member in inviteList])
     contest.add_team(newTeam)
     print(newTeam.get_data())
 
@@ -151,7 +151,7 @@ async def team_name_autocompletion(interaction: discord.Interaction, current: st
   team_name_choices = []
 
   for team in contest.all_teams:
-    if interaction.user.id in team.invitedMemberIDs or interaction.user.id == team.own:
+    if interaction.user.id in team.invited_member_ids or interaction.user.id == team.own:
       team_name_choices.append(discord.app_commands.Choice(name = team.name.lower(), value = team.name))
   return team_name_choices
 
@@ -162,7 +162,7 @@ async def team_name_autocompletion(interaction: discord.Interaction, current: st
 async def join_team(interaction, contest_name: str, team_name: str):
   contest = database.get_contest(contest_name)
   new_team = contest.get_team(team_name)
-  if interaction.user.id in new_team.memberIDs or interaction.user.id == new_team.ownerID:
+  if interaction.user.id in new_team.member_ids or interaction.user.id == new_team.owner_id:
     await interaction.response.send_message("Looks like you are already in this team. To leave, use /leave_current_team.", ephemeral = True)
     return
   
@@ -195,7 +195,7 @@ async def change_team_name(interaction, contest_name: str, new_team_name: str):
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def modify_team_size_limit(interaction, contest_name: str, size_limit: int):
   contest = database.get_contest(contest_name)
-  contest.teamSizeLimit = size_limit
+  contest.team_size_limit = size_limit
   database.update_contest(contest)
 
 
@@ -204,7 +204,7 @@ async def modify_team_size_limit(interaction, contest_name: str, size_limit: int
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def modify_total_teams_limit(interaction, contest_name: str, teams_limit: int):
   contest = database.get_contest(contest_name)
-  contest.totalTeamsLimit = teams_limit
+  contest.total_teams_limit = teams_limit
   database.update_contest(contest)
 
 
@@ -236,7 +236,7 @@ async def transfer_ownership(interaction, contest_name: str, new_owner: discord.
     player_team = contest.get_team_of_user(interaction.user.id)
     if player_team is None:
       await interaction.response.send_message("it looks like you are not in a team currently.")
-    elif interaction.user.id == player_team.ownerID:
+    elif interaction.user.id == player_team.owner_id:
       player_team.transfer_ownership(new_owner.id)
       database.update_contest(contest)
       await interaction.response.send_message("Ownership has been successfully transferred to {newOwner}!".format(newOwner = new_owner))
@@ -256,11 +256,11 @@ async def unregister_team(interaction, contest_name: str):
 
   if user_team is None:
     await interaction.response.send_message("Hmm.... You don't seem to be in a team as of now.", ephemeral = True)
-  elif user_team.ownerID != interaction.user.id:
+  elif user_team.owner_id != interaction.user.id:
     await interaction.response.send_message("Holdup! You can't delete this team, as it was created by someone else. Ask the creator to delete the team. If you want to leave, use /leave_current_team.", ephemeral = True)
   else:
     contest.remove_team(user_team)
-    for memberID in user_team.memberIDs:
+    for memberID in user_team.member_ids:
       channel = await interaction.guild.get_member(memberID).create_dm()
       await channel.send("The original owner of team {teamName} has deleted this team. To sign up for another team, ask another team owner to invite you, then use /join.".format(teamName = user_team.name))
     await interaction.response.send_message("Success!")
@@ -336,12 +336,12 @@ async def create_contest_channels(interaction, contest_name: str):
         interaction.guild.default_role: discord.PermissionOverwrite(read_messages = False),
         manager_role: discord.PermissionOverwrite(read_messages = True),
         admin_role: discord.PermissionOverwrite(read_messages = True),
-        interaction.guild.get_member(team.ownerID): discord.PermissionOverwrite(read_messages = True)
+        interaction.guild.get_member(team.owner_id): discord.PermissionOverwrite(read_messages = True)
       }
-      for memberID in team.memberIDs:
+      for memberID in team.member_ids:
         overwrites[interaction.guild.get_member(memberID)] = discord.PermissionOverwrite(read_messages = True)
       channel = await interaction.guild.create_text_channel(team.name+'-contest-channel', overwrites=overwrites, category = category)
-      contest.channelIDInfo[team.name] = channel.id
+      contest.channel_id_info[team.name] = channel.id
       database.update_contest(contest)
     except:
       await interaction.response.send_message("Hmmm.... It looks like this server doesn't have a category named 'DSMC 2023'. Try again.")
@@ -356,7 +356,7 @@ async def create_contest_channels(interaction, contest_name: str):
 async def delete_contest_channels(interaction, contest_name: str):
   contest = database.get_contest(contest_name)
   for team in contest.all_teams:
-    await interaction.guild.get_channel(contest.channelIDInfo[team.name]).delete()
+    await interaction.guild.get_channel(contest.channel_id_info[team.name]).delete()
 
   await interaction.response.send_message("All contest channels deleted!.")
 
@@ -387,7 +387,7 @@ async def submit_team_answers(interaction, contest_name: str):
   try:
     contest = database.get_contest(contest_name)
     player_team = contest.get_team_of_user(interaction.user.id)
-    if player_team is not None and player_team.ownerID == interaction.user.id:
+    if player_team is not None and player_team.owner_id == interaction.user.id:
       player_team.submit_answers()
       database.update_contest(contest)
       await interaction.response.send_message("The owner has officially submitted all of their teams' answers!")
@@ -406,7 +406,7 @@ async def question_answer_score(interaction, contest_name: str):
 
   for question in contest.all_questions:
     question_string += "Q{questionNumber}: answer = {answer}, points = {pointValue} \n".format(
-      questionNumber = question.get_number(), answer = question.correctAnswer, pointValue = question.pointValue)
+      questionNumber = question.get_number(), answer = question.correct_answer, pointValue = question.point_value)
   try:
     await interaction.response.send_message(question_string)
   except:
@@ -459,8 +459,8 @@ async def all_teams(interaction, contest_name: str):
   for team in contest.all_teams:
     allTeamsString += "Team '{teamName}', with owner '{owner}' and members {members}, \n".format(
       teamName = team.name,
-      owner = interaction.guild.get_member(team.ownerID).name,
-      members = [interaction.guild.get_member(memberID).name for memberID in team.memberIDs]
+      owner = interaction.guild.get_member(team.owner_id).name,
+      members = [interaction.guild.get_member(memberID).name for memberID in team.member_ids]
     )
   await interaction.response.send_message("All teams: \n" + allTeamsString)
 
@@ -482,7 +482,7 @@ async def remove_member_from_team(interaction, contest_name: str, team_name: str
     team.remove_member(member.id)
   except OwnerLeaveTeamException:
     try:
-      team.transfer_ownership(team.memberIDs[0])
+      team.transfer_ownership(team.member_ids[0])
       await interaction.user.send_message(
         "The member you tried to remove was an owner; thus, the owner is now a random member within the team.",
         ephemeral = True
@@ -526,7 +526,7 @@ db_group = discord.app_commands.Group(name="db", description="[Bot administrator
 @discord.app_commands.check(is_admin)
 async def db_get(interaction: discord.Interaction, key: str):
   try:
-    value = database.storageAPI.get_value(key, evaluate=True)
+    value = database.storage_api.get_value(key, evaluate=True)
     await interaction.response.send_message(str(value), ephemeral=True)
   except DataAPIException:
     await interaction.response.send_message(
@@ -539,7 +539,7 @@ async def db_get(interaction: discord.Interaction, key: str):
 @discord.app_commands.check(is_admin)
 async def db_set(interaction, key: str, value: str):
   try:
-    database.storageAPI.set_value(key, value)
+    database.storage_api.set_value(key, value)
     await interaction.response.send_message(f"Set {key} to {value}.")
   except DataAPIException:
     await interaction.response.send_message(
@@ -552,7 +552,7 @@ async def db_set(interaction, key: str, value: str):
 @discord.app_commands.check(is_admin)
 async def db_del(interaction, key: str):
   try:
-    database.storageAPI.del_value(key)
+    database.storage_api.del_value(key)
     await interaction.response.send_message(f"Deleted {key}.")
   except DataAPIException:
     await interaction.response.send_message(
@@ -566,7 +566,7 @@ async def db_del(interaction, key: str):
 async def db_keys(interaction):
   try:
     await interaction.response.send_message(
-      str(database.storageAPI.get_keys()),
+      str(database.storage_api.get_keys()),
       ephemeral=True
     )
 

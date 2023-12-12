@@ -12,48 +12,48 @@ from customExceptions import (
 
 
 class Team:
-  def __init__(self, contestInstance, name: str, ownerID: int, memberIDs: list = [], invitedMemberIDs: list = []):
-    if contestInstance.teamSizeLimit is not None and len(memberIDs) > contestInstance.teamSizeLimit:
+  def __init__(self, contest_instance, name: str, owner_id: int, member_ids: list = [], invited_member_ids: list = []):
+    if contest_instance.teamSizeLimit is not None and len(member_ids) > contest_instance.teamSizeLimit:
       raise TeamSizeExceededException
     else:
       self.submitRanking = 0
       self.answersSubmitted = False
-      self.contestInstance = contestInstance
+      self.contestInstance = contest_instance
       self.name = name
-      self.ownerID = ownerID
-      self.memberIDs = memberIDs
-      self.invitedMemberIDs = invitedMemberIDs
+      self.owner_id = owner_id
+      self.member_ids = member_ids
+      self.invited_member_ids = invited_member_ids
       self.answerScore: dict = {}
 
   def member_in_team(self, memberID: int) -> bool:
-    return memberID == self.ownerID or memberID in self.memberIDs
+    return memberID == self.owner_id or memberID in self.member_ids
 
   def member_invited_to_team(self, memberID: int) -> bool:
-    return memberID in self.invitedMemberIDs
+    return memberID in self.invited_member_ids
 
   def invite_member(self, memberID: int):
-    self.invitedMemberIDs.append(memberID)
+    self.invited_member_ids.append(memberID)
 
   def uninvite_member(self, memberID: int):
     try:
-      self.invitedMemberIDs.remove(memberID)
+      self.invited_member_ids.remove(memberID)
     except:
       raise MemberNotInTeamException
 
   def add_member(self, memberID: int):
-    if memberID not in self.invitedMemberIDs:
+    if memberID not in self.invited_member_ids:
       raise MemberNotInvitedException
     if memberID in self.contestInstance.all_contest_participants:
       raise MemberInAnotherTeamException
-    if self.contestInstance.teamSizeLimit is None or len(self.memberIDs) < self.contestInstance.teamSizeLimit:
-      self.memberIDs.append(memberID)
+    if self.contestInstance.teamSizeLimit is None or len(self.member_ids) < self.contestInstance.teamSizeLimit:
+      self.member_ids.append(memberID)
     else:
       raise TeamSizeExceededException
 
   def remove_member(self, memberID: int):
-    if memberID in self.memberIDs:
-      self.memberIDs.remove(memberID)
-    elif memberID == self.ownerID:
+    if memberID in self.member_ids:
+      self.member_ids.remove(memberID)
+    elif memberID == self.owner_id:
       raise OwnerLeaveTeamException
     else:
       raise MemberNotInTeamException
@@ -79,10 +79,10 @@ class Team:
       raise WrongPeriodException(ContestPeriod.competition)
 
   def transfer_ownership(self, newOwnerID: int):
-    if newOwnerID in self.memberIDs:
-      self.memberIDs.append(self.ownerID)
-      self.memberIDs.remove(newOwnerID)
-      self.ownerID = newOwnerID
+    if newOwnerID in self.member_ids:
+      self.member_ids.append(self.owner_id)
+      self.member_ids.remove(newOwnerID)
+      self.owner_id = newOwnerID
     else:
       raise MemberNotInTeamException
 
@@ -99,9 +99,9 @@ class Team:
   def get_data(self):
     return {
       "name": self.name,
-      "ownerID": self.ownerID,
-      "memberIDs": self.memberIDs,
-      "invitedMemberIDs": self.invitedMemberIDs,
+      "ownerID": self.owner_id,
+      "memberIDs": self.member_ids,
+      "invitedMemberIDs": self.invited_member_ids,
       "answerScore": self.answerScore,
       "answersSubmitted": self.answersSubmitted
     }

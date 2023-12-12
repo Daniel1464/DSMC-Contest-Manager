@@ -1,7 +1,6 @@
 from question import Question
 from team import Team
 from functools import singledispatch
-
 from customExceptions import (
   ContestTeamLimitException,
   MemberInAnotherTeamException,
@@ -9,29 +8,33 @@ from customExceptions import (
   TeamNotInContestException,
   WrongPeriodException
 )
-
 from contestPeriod import ContestPeriod
+from typing import Any
 
 
 class Contest:
   # Here, questions and teams represent the questions and teams in dict form.
-  def __init__(self, name: str, link: str, teamSizeLimit: int | None = None, totalTeamsLimit: int | None = None, questions: list[Question] = [], teams: list[Team] = []):
+  def __init__(
+      self, 
+      name: str, 
+      link: str, 
+      teamSizeLimit: int | None = None, 
+      totalTeamsLimit: int | None = None, 
+      questions: list[Question] = [], 
+      teams: list[Team] = [] 
+  ):
     self.name = name
     self.link = link
-    self.teamSizeLimit = teamSizeLimit
-    self.totalTeamsLimit = totalTeamsLimit
-
+    self.team_size_limit = teamSizeLimit
+    self.total_teams_limit = totalTeamsLimit
     # used to keep track who submitted first, second, third, etc.
-    self.teamSubmitOrder = 1
-
+    self.team_submit_order = 1
     # used to keep track of which period the contest is currently in
     self.period = ContestPeriod.preSignup
+    self.channel_id_info: dict = {}
 
-    self.__questions = questions
-    self.__teams = teams
-
-    self.channelIDInfo: dict = {}
-
+    self.__questions: list[Question] = questions
+    self.__teams: list[Team] = teams
     # note: self represents the contest instance below.
     # this code essentially checks if the list of questions is in fact a list of data dicts, and converts them into their respective objects
     # (with class instances passed in)
@@ -44,9 +47,9 @@ class Contest:
   def all_contest_participants(self) -> list:
     ids = []
     for team in self.__teams:
-      if team.ownerID not in ids:
-        ids.append(team.ownerID)
-      for memberID in team.memberIDs:
+      if team.owner_id not in ids:
+        ids.append(team.owner_id)
+      for memberID in team.member_ids:
         if memberID not in ids:
           ids.append(memberID)
     return ids
@@ -55,7 +58,7 @@ class Contest:
   def all_invited_members(self) -> list:
     ids = []
     for team in self.__teams:
-      for memberID in team.invitedMemberIDs:
+      for memberID in team.invited_member_ids:
         if memberID not in ids:
           ids.append(memberID)
     return ids
@@ -115,14 +118,14 @@ class Contest:
 
   def add_team(self, newTeam: Team):
     if self.period == ContestPeriod.signup:
-      if self.totalTeamsLimit is None or len(self.__teams) < self.totalTeamsLimit:
+      if self.total_teams_limit is None or len(self.__teams) < self.total_teams_limit:
         for team in self.__teams:
           if team.name == newTeam.name:
             raise TeamNameException
         allMembers = self.all_contest_participants
-        if newTeam.ownerID in allMembers:
+        if newTeam.owner_id in allMembers:
           raise MemberInAnotherTeamException
-        for memberID in newTeam.memberIDs:
+        for memberID in newTeam.member_ids:
           if memberID in allMembers:
             raise MemberInAnotherTeamException
         self.__teams.append(newTeam)
