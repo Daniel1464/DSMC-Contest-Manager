@@ -4,18 +4,18 @@ class Question:
     self.correctAnswer = correctAnswer
     self.pointValue = pointValue
 
-  def getData(self) -> dict:
+  def get_data(self) -> dict:
     return {
       "correctAnswer": self.correctAnswer,
       "pointValue": self.pointValue
     }
 
   @staticmethod
-  def fromData(contestInstance, data: dict):
+  def from_data(contestInstance, data: dict):
     return Question(contestInstance, data["correctAnswer"], data["pointValue"])
 
-  def getNumber(self) -> int:
+  def get_number(self) -> int:
     return self.contestInstance.all_questions.index(self)+1
 
   # corrects for floating point error.
-  def isCorrect(self, answer: float): return abs(answer - self.correctAnswer) <= 0.00000000000001
+  def is_correct(self, answer: float): return abs(answer - self.correctAnswer) <= 0.00000000000001

@@ -54,9 +54,8 @@ class MemberNotInvitedException(Exception):
 
 
 class WrongPeriodException(Exception):
-  def __init__(self, correctPeriods: list[ContestPeriod]):
-    super().__init__("This function can only be accessed during these periods: "+str(correctPeriods))
-
+  def __init__(self, *correctPeriods: ContestPeriod):
+    super().__init__("This function can only be accessed during these periods: " + str(correctPeriods))
 
 class OwnerLeaveTeamException(Exception):
   def __init__(self):

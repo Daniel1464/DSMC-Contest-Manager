@@ -36,9 +36,9 @@ class Contest:
     # this code essentially checks if the list of questions is in fact a list of data dicts, and converts them into their respective objects
     # (with class instances passed in)
     if questions != [] and not isinstance(questions[0], Question):
-      self.__questions = [Question.fromData(self, data) for data in questions]
+      self.__questions = [Question.from_data(self, data) for data in questions]
     if teams != [] and not isinstance(teams[0], Team):
-      self.__teams = [Team.fromData(self, data) for data in teams]
+      self.__teams = [Team.from_data(self, data) for data in teams]
 
   @property
   def all_contest_participants(self) -> list:
@@ -61,17 +61,16 @@ class Contest:
     return ids
 
   @property
-  def all_teams(self) -> list:
+  def all_teams(self) -> list[Team]:
     return self.__teams
 
   @property
-  def team_rankings(self) -> list:
+  def team_rankings(self) -> list[Team]:
     if self.period == ContestPeriod.competition or self.period == ContestPeriod.postCompetition:
       # note: the team ranking is negated here because it's sorting by reverse(the higher the key, the farther up it appears.)
-      return sorted(self.__teams, reverse = True, key = lambda team: (team.totalPoints, -team.submitRanking))
+      return sorted(self.__teams, reverse = True, key = lambda team: (team.total_points, -team.submitRanking))
     else:
-      raise WrongPeriodException([ContestPeriod.competition, ContestPeriod.postCompetition])
-      return
+      raise WrongPeriodException(ContestPeriod.competition, ContestPeriod.postCompetition)
 
   @property
   def total_problems(self) -> int:
@@ -84,8 +83,7 @@ class Contest:
       else:
         self.__questions.insert(questionNumber - 1, question)
     else:
-      raise WrongPeriodException([ContestPeriod.preSignup, ContestPeriod.signup])
-      return
+      raise WrongPeriodException(ContestPeriod.preSignup, ContestPeriod.signup)
 
   # How these lines of code work:
   # Essentially, @singledispatch allows the remove_question function
@@ -97,15 +95,14 @@ class Contest:
     if self.period == ContestPeriod.preSignup or self.period == ContestPeriod.signup:
       self.__questions.pop(questionNumber-1)
     else:
-      raise WrongPeriodException([ContestPeriod.preSignup, ContestPeriod.signup])
+      raise WrongPeriodException(ContestPeriod.preSignup, ContestPeriod.signup)
 
   @remove_question.register
   def _(self, question: Question):
     if self.period == ContestPeriod.preSignup or self.period == ContestPeriod.signup:
       self.__questions.remove(question)
     else:
-      raise WrongPeriodException([ContestPeriod.preSignup, ContestPeriod.signup])
-      return
+      raise WrongPeriodException(ContestPeriod.preSignup, ContestPeriod.signup)
 
   def get_question(self, questionNumber: int) -> Question:
     try:
@@ -122,21 +119,17 @@ class Contest:
         for team in self.__teams:
           if team.name == newTeam.name:
             raise TeamNameException
-            return
         allMembers = self.all_contest_participants
         if newTeam.ownerID in allMembers:
           raise MemberInAnotherTeamException
-          return
         for memberID in newTeam.memberIDs:
           if memberID in allMembers:
             raise MemberInAnotherTeamException
-            return
         self.__teams.append(newTeam)
       else:
         raise ContestTeamLimitException
     else:
-      raise WrongPeriodException([ContestPeriod.signup])
-      return
+      raise WrongPeriodException(ContestPeriod.signup)
 
   @singledispatch
   def remove_team(self, team: Team):
@@ -154,11 +147,10 @@ class Contest:
       if team.name.lower() == teamName.lower():
         return team
     raise TeamNotInContestException
-    return
 
   def get_team_of_user(self, userID: int) -> Team | None:
     for team in self.__teams:
-      if team.memberInTeam(userID):
+      if team.member_in_team(userID):
         return team
     return None
 
@@ -170,4 +162,4 @@ class Contest:
       else:
         return None
     else:
-      raise WrongPeriodException([ContestPeriod.competition, ContestPeriod.postCompetition])
+      raise WrongPeriodException(ContestPeriod.competition, ContestPeriod.postCompetition)

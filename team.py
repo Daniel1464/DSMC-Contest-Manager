@@ -25,37 +25,32 @@ class Team:
       self.invitedMemberIDs = invitedMemberIDs
       self.answerScore: dict = {}
 
-  def memberInTeam(self, memberID: int) -> bool:
+  def member_in_team(self, memberID: int) -> bool:
     return memberID == self.ownerID or memberID in self.memberIDs
 
-  def memberInvitedToTeam(self, memberID: int) -> bool:
+  def member_invited_to_team(self, memberID: int) -> bool:
     return memberID in self.invitedMemberIDs
 
-  def inviteMember(self, memberID: int):
+  def invite_member(self, memberID: int):
     self.invitedMemberIDs.append(memberID)
 
-  def uninviteMember(self, memberID: int):
+  def uninvite_member(self, memberID: int):
     try:
       self.invitedMemberIDs.remove(memberID)
     except:
       raise MemberNotInTeamException
 
-  def addMember(self, memberID: int):
-
+  def add_member(self, memberID: int):
     if memberID not in self.invitedMemberIDs:
       raise MemberNotInvitedException
-      return
-
     if memberID in self.contestInstance.all_contest_participants:
       raise MemberInAnotherTeamException
-      return
-
     if self.contestInstance.teamSizeLimit is None or len(self.memberIDs) < self.contestInstance.teamSizeLimit:
       self.memberIDs.append(memberID)
     else:
       raise TeamSizeExceededException
 
-  def removeMember(self, memberID: int):
+  def remove_member(self, memberID: int):
     if memberID in self.memberIDs:
       self.memberIDs.remove(memberID)
     elif memberID == self.ownerID:
@@ -67,14 +62,13 @@ class Team:
     if self.contestInstance.period == ContestPeriod.competition:
       if self.answersSubmitted:
         raise AnswersAlreadySubmittedException
-        return
 
       if question.isCorrect(answer):
         self.answerScore[question.getNumber()] = question.pointValue
       else:
         self.answerScore[question.getNumber()] = 0
     else:
-      raise WrongPeriodException([ContestPeriod.competition])
+      raise WrongPeriodException(ContestPeriod.competition)
 
   def submit_answers(self):
     if self.contestInstance.period == ContestPeriod.competition:
@@ -82,7 +76,7 @@ class Team:
       self.submitRanking = self.contestInstance.teamSubmitOrder
       self.contestInstance.teamSubmitOrder += 1
     else:
-      raise WrongPeriodException([ContestPeriod.competition])
+      raise WrongPeriodException(ContestPeriod.competition)
 
   def transfer_ownership(self, newOwnerID: int):
     if newOwnerID in self.memberIDs:
@@ -93,7 +87,7 @@ class Team:
       raise MemberNotInTeamException
 
   @property
-  def totalPoints(self) -> int:
+  def total_points(self) -> int:
     if not self.answersSubmitted:
       return 0
 
@@ -102,7 +96,7 @@ class Team:
       total += self.answerScore[problemNumber]
     return total
 
-  def getData(self):
+  def get_data(self):
     return {
       "name": self.name,
       "ownerID": self.ownerID,
@@ -113,7 +107,7 @@ class Team:
     }
 
   @staticmethod
-  def fromData(contestInstance, data: dict):
+  def from_data(contestInstance, data: dict):
     team = Team(
       contestInstance,
       data["name"],

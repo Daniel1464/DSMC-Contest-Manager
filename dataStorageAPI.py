@@ -16,12 +16,12 @@ class DataStorageAPI:
     self.__local_data: dict[str,str] = {}
     self.remote_data_out_of_sync = False
 
-  def getLocalData(self):
+  def get_local_data(self):
     return self.__local_data
 
   
 
-  def getKeys(self):
+  def get_keys(self) -> list[str]:
     res = self.session.get(
       "https://data-storage-system.danielchen1464.repl.co/get_keys?password={passcode}"
       .format(passcode = getenv(self.passwordStringKey))
@@ -32,7 +32,7 @@ class DataStorageAPI:
     else:
       raise DataAPIException
 
-  def getValue(self, key: str, evaluate: bool = False):
+  def get_value(self, key: str, evaluate: bool = False):
     if key in self.__local_data:
       return self.__local_data[key]
     print(self.__local_data)
@@ -42,16 +42,16 @@ class DataStorageAPI:
     if res.ok:
       if evaluate:
         # .strip removes the pesky newline characters from the string
-        data =  ast.literal_eval(res.content.decode("utf-8").strip())
+        data = ast.literal_eval(res.content.decode("utf-8").strip())
       else:
-        data =  res.content.decode("utf-8")
+        data = res.content.decode("utf-8")
       self.__local_data[key] = data
       return data
     else:
       raise DataAPIException
 
 
-  def setValue(self, key: str, value):
+  def set_value(self, key: str, value):
     self.resync_data()
     self.__local_data[key] = value
     print(self.__local_data)
@@ -64,7 +64,7 @@ class DataStorageAPI:
       self.remote_data_out_of_sync = True
       raise DataAPIException
 
-  def delValue(self, key: str):
+  def del_value(self, key: str):
     self.resync_data()
     try:
       del self.__local_data[key]
@@ -86,13 +86,13 @@ class DataStorageAPI:
       if self.remote_data_out_of_sync:
         print("data resync is starting.")
         local_keys = self.__local_data.keys()
-        remote_keys = self.getKeys()
+        remote_keys = self.get_keys()
   
         for key in remote_keys:
           if not (key in local_keys):
-            self.delValue(key)
+            self.del_value(key)
         for key in local_keys:
-          self.setValue(key,self.__local_data[key])
+          self.set_value(key,self.__local_data[key])
         self.remote_data_out_of_sync = False
         print("data resync has finished.")
     except:
