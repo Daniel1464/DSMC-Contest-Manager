@@ -1,5 +1,4 @@
 from contestPeriod import ContestPeriod
-
 from customExceptions import (
   AnswersAlreadySubmittedException,
   MemberInAnotherTeamException,
@@ -12,7 +11,14 @@ from customExceptions import (
 
 
 class Team:
-  def __init__(self, contest_instance, name: str, owner_id: int, member_ids: list = [], invited_member_ids: list = []):
+  def __init__(
+      self, 
+      contest_instance, 
+      name: str, 
+      owner_id: int, 
+      member_ids: list = [], 
+      invited_member_ids: list = []
+  ):
     if contest_instance.teamSizeLimit is not None and len(member_ids) > contest_instance.teamSizeLimit:
       raise TeamSizeExceededException
     else:
@@ -62,7 +68,6 @@ class Team:
     if self.contestInstance.period == ContestPeriod.competition:
       if self.answersSubmitted:
         raise AnswersAlreadySubmittedException
-
       if question.isCorrect(answer):
         self.answerScore[question.getNumber()] = question.pointValue
       else:
@@ -90,7 +95,6 @@ class Team:
   def total_points(self) -> int:
     if not self.answersSubmitted:
       return 0
-
     total = 0
     for problemNumber in self.answerScore.keys():
       total += self.answerScore[problemNumber]

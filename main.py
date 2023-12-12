@@ -29,7 +29,7 @@ client: discord.Client = discord.Client(intents=intents)
 tree: discord.app_commands.CommandTree = discord.app_commands.CommandTree(client)
 
 # important!
-current_guild_id: int = 946049970727968798
+current_guild_id: int = 624314920158232616
 database: ContestDatabase = ContestDatabase('password')
 
 
@@ -45,7 +45,6 @@ async def on_app_command_error(interaction, error):
     await interaction.response.send_message("A data API issue has just occured. This could be a typo from one of the textboxes, or a problem with the bot. Please consult one of the test proctors and/or @DanielRocksUrMom for help. ")
   else:
     await interaction.response.send_message("Sorry, there was a problem with the bot, so an uncaught error has occurred. Please consult @DanielRocksUrMom for help.")
-
   daniel = client.get_user(614549755342880778)
   if daniel is not None:
     channel = await daniel.create_dm()
@@ -55,7 +54,6 @@ async def on_app_command_error(interaction, error):
       file.write(error)
   else:
     print("Failed to write to disk.")
-
   with open('errors.log', 'rb') as file:
     await channel.send("This is the error file: ", file = discord.File(file, "errors.log"))
   logging.warning(error)
@@ -91,25 +89,20 @@ async def all_contest_competitors(interaction, contest_name: str):
 @tree.command(name = "register_team", description = "Registers a team into a contest. ", guild=discord.Object(id=current_guild_id))
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def register_team(interaction, contest_name: str, team_name: str, member_two: discord.Member = None, member_three: discord.Member = None, member_four: discord.Member = None):
-
   inviteList = []
   if member_two is not None: inviteList.append(member_two)
   if member_three is not None: inviteList.append(member_three)
   if member_four is not None: inviteList.append(member_four)
 
   contest = database.get_contest(contest_name)
-
   try:
     newTeam = Team(contest_instance = contest, name = team_name, owner_id = interaction.user.id, invited_member_ids = [member.id for member in inviteList])
     contest.add_team(newTeam)
     print(newTeam.get_data())
-
     await interaction.response.send_message("Team '{teamName}' has been added to the contest with the users {members} invited. In order for them to join your team, they must use /join_team {teamName}.".format(members = [member.display_name for member in inviteList], teamName = team_name))
-
     for member in inviteList:
       channel = await member.create_dm()
       await channel.send("The user {user} has invited you to join the team '{teamName}' for the contest '{contestName}'. In order to join, use '/join_team {teamName}' in the Mathematics Server (it doesn't work within DMs). If you don't want to join, ignore this message.".format(user = interaction.user, contestName = contest.name, teamName = team_name))
-
     database.update_contest(contest)
   except WrongPeriodException:
     await interaction.response.send_message("You can only create a team when this contest is in it's signup phase. Sorry!")
@@ -147,9 +140,7 @@ async def invite_more_members(interaction, contest_name: str, member_one: discor
 async def team_name_autocompletion(interaction: discord.Interaction, current: str):
   contest_name = interaction.namespace.contest_name
   contest = database.get_contest(contest_name)
-
   team_name_choices = []
-
   for team in contest.all_teams:
     if interaction.user.id in team.invited_member_ids or interaction.user.id == team.own:
       team_name_choices.append(discord.app_commands.Choice(name = team.name.lower(), value = team.name))
@@ -165,7 +156,6 @@ async def join_team(interaction, contest_name: str, team_name: str):
   if interaction.user.id in new_team.member_ids or interaction.user.id == new_team.owner_id:
     await interaction.response.send_message("Looks like you are already in this team. To leave, use /leave_current_team.", ephemeral = True)
     return
-  
   try:
     new_team.add_member(interaction.user.id)
     await interaction.response.send_message("Hooray! You have officially joined team {teamName}! to leave, use /leave_current_team.".format(teamName = team_name))
@@ -174,6 +164,7 @@ async def join_team(interaction, contest_name: str, team_name: str):
     await interaction.response.send_message("Hmmm.... It seems that you haven't been invited to this team.", ephemeral = True)
   except MemberInAnotherTeamException:
     await interaction.response.send_message("You've already joined another team! Use /leave_current_team to leave your current team, then use /join_team to join this one.", ephemeral = True)
+
 
 @tree.command(name = "change_team_name", description = "Change the name of the team you are in.", guild=discord.Object(id=current_guild_id))
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
@@ -189,6 +180,7 @@ async def change_team_name(interaction, contest_name: str, new_team_name: str):
       previousname + "' now has the name '" + team.name + "'.")
   else:
     await interaction.response.send_message("It seems that you are not in a team currently.", ephemeral = True)
+
 
 @tree.command(name = "modify_team_size_limit", description = "MOD ONLY. Modifies the team size limit for a contest. ", guild=discord.Object(id=current_guild_id))
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
@@ -251,9 +243,7 @@ async def transfer_ownership(interaction, contest_name: str, new_owner: discord.
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def unregister_team(interaction, contest_name: str):
   contest = database.get_contest(contest_name)
-
   user_team = contest.get_team_of_user(interaction.user.id)
-
   if user_team is None:
     await interaction.response.send_message("Hmm.... You don't seem to be in a team as of now.", ephemeral = True)
   elif user_team.owner_id != interaction.user.id:
@@ -283,7 +273,6 @@ async def add_question(interaction, contest_name: str, answer: float, points: in
     await interaction.response.send_message("currently, the contest is underway. You cannot add questions at this time.")
 
 
-# untested
 @tree.command(name = "remove_question", description = "MOD ONLY. Removes a question from a specified contest.", guild=discord.Object(id=current_guild_id))
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
@@ -472,6 +461,7 @@ async def delete_contest(interaction, contest_name: str):
   database.delete_contest(contest_name)
   await interaction.response.send_message("Contest has been deleted!")
 
+
 @tree.command(name = "remove_member_from_team", description = "MOD ONLY. Removes a member from a team.", guild = discord.Object(id=current_guild_id))
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = team_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
@@ -497,8 +487,6 @@ async def remove_member_from_team(interaction, contest_name: str, team_name: str
     await interaction.user.send_message("This member is not currently in the team.", ephemeral = True)
   finally:
     database.update_contest(contest)
-  
-
 
 
 def is_admin(interaction: discord.Interaction):
@@ -512,6 +500,7 @@ async def sync_commands(interaction: discord.Interaction):
   await tree.sync(guild=discord.Object(id=current_guild_id))
   await interaction.followup.send("Commands synced.")
 
+
 @tree.command(name = "sync_global", description="[Bot administrators only]")
 @discord.app_commands.check(is_admin)
 async def sync_commands(interaction: discord.Interaction):
@@ -519,8 +508,12 @@ async def sync_commands(interaction: discord.Interaction):
   await tree.sync()
   await interaction.followup.send("Commands synced across all guilds.")
 
-db_group = discord.app_commands.Group(name="db", description="[Bot administrators only]")
 
+
+
+
+
+db_group = discord.app_commands.Group(name="db", description="[Bot administrators only]")
 
 @db_group.command(name="get")
 @discord.app_commands.check(is_admin)

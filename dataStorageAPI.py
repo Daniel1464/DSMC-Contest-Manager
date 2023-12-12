@@ -6,7 +6,6 @@ class DataAPIException(Exception):
   def __init__(self):
     super().__init__("There was an issue with the Data API. Check it's page for the specific error.")
 
-
 class DataStorageAPI:
   # passwordStringKey represents the ENV variable key.
   def __init__(self, passwordStringKey: str = "password"):
@@ -19,14 +18,11 @@ class DataStorageAPI:
   def get_local_data(self):
     return self.__local_data
 
-  
-
   def get_keys(self) -> list[str]:
     res = self.session.get(
       "https://data-storage-system.danielchen1464.repl.co/get_keys?password={passcode}"
       .format(passcode = getenv(self.passwordStringKey))
     )
-
     if res.ok:
       return ast.literal_eval(res.content.decode("utf-8").strip())
     else:
@@ -36,9 +32,7 @@ class DataStorageAPI:
     if key in self.__local_data:
       return self.__local_data[key]
     print(self.__local_data)
-    
     res = self.session.get("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = getenv(self.passwordStringKey), inputKey = key))
-
     if res.ok:
       if evaluate:
         # .strip removes the pesky newline characters from the string
@@ -57,7 +51,6 @@ class DataStorageAPI:
     print(self.__local_data)
     input = str(value)
     res = self.session.post("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = getenv(self.passwordStringKey), inputKey = key), data = {"value": input})
-    
     if res.ok:
       return res.content.decode("utf-8")
     else:
@@ -72,9 +65,7 @@ class DataStorageAPI:
       self.remote_data_out_of_sync = True
       raise DataAPIException
     print(self.__local_data)
-    
     res = self.session.get("https://data-storage-system.danielchen1464.repl.co/delete_key?password={passcode}&key={inputKey}".format(passcode = getenv(self.passwordStringKey), inputKey = key))
-
     if res.ok:
       return res.content.decode("utf-8")
     else:
@@ -87,7 +78,6 @@ class DataStorageAPI:
         print("data resync is starting.")
         local_keys = self.__local_data.keys()
         remote_keys = self.get_keys()
-  
         for key in remote_keys:
           if not (key in local_keys):
             self.del_value(key)
