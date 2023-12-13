@@ -1,14 +1,11 @@
 import discord
-
 from contest import Contest
 from team import Team
 from question import Question
 from contestDatabase import ContestDatabase
 from contestPeriod import ContestPeriod
 from getenv import getenv
-
 from dataStorageAPI import DataAPIException
-
 from customExceptions import (
   AnswersAlreadySubmittedException,
   MemberInAnotherTeamException,
@@ -17,7 +14,6 @@ from customExceptions import (
   OwnerLeaveTeamException,
   WrongPeriodException
 )
-
 import traceback
 import logging
 
@@ -62,7 +58,7 @@ async def on_app_command_error(interaction, error):
 # functional
 @tree.command(name = "create_contest", description = "MOD ONLY. Creates a new Contest.", guild=discord.Object(id=current_guild_id))
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
-async def create_contest(interaction, name: str, link: str, team_size_limit: int = None, total_teams_limit: int = None):
+async def create_contest(interaction, name: str, link: str, team_size_limit: int | None = None, total_teams_limit: int | None = None):
   newContest = Contest(name.lower(), link, team_size_limit, total_teams_limit)
   await interaction.response.send_message("Contest successfully created!")
   database.update_contest(newContest)
@@ -88,7 +84,7 @@ async def all_contest_competitors(interaction, contest_name: str):
 # this command allows a user to register their own team, along with 3 invited members.
 @tree.command(name = "register_team", description = "Registers a team into a contest. ", guild=discord.Object(id=current_guild_id))
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
-async def register_team(interaction, contest_name: str, team_name: str, member_two: discord.Member = None, member_three: discord.Member = None, member_four: discord.Member = None):
+async def register_team(interaction, contest_name: str, team_name: str, member_two: discord.Member | None = None, member_three: discord.Member | None = None, member_four: discord.Member | None = None):
   inviteList = []
   if member_two is not None: inviteList.append(member_two)
   if member_three is not None: inviteList.append(member_three)
@@ -115,7 +111,7 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
 
 @tree.command(name = "invite_more_members", description = "Invites more members to your team", guild=discord.Object(id=current_guild_id))
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
-async def invite_more_members(interaction, contest_name: str, member_one: discord.Member = None, member_two: discord.Member = None, member_three: discord.Member = None):
+async def invite_more_members(interaction, contest_name: str, member_one: discord.Member | None = None, member_two: discord.Member | None = None, member_three: discord.Member | None = None):
   contest = database.get_contest(contest_name)
   message = ""
   user_team = contest.get_team_of_user(interaction.user.id)
@@ -142,7 +138,7 @@ async def team_name_autocompletion(interaction: discord.Interaction, current: st
   contest = database.get_contest(contest_name)
   team_name_choices = []
   for team in contest.all_teams:
-    if interaction.user.id in team.invited_member_ids or interaction.user.id == team.own:
+    if interaction.user.id in team.invited_member_ids or interaction.user.id == team.owner_id:
       team_name_choices.append(discord.app_commands.Choice(name = team.name.lower(), value = team.name))
   return team_name_choices
 
@@ -260,7 +256,7 @@ async def unregister_team(interaction, contest_name: str):
 @tree.command(name = "add_question", description = "MOD ONLY. Adds a question into a contest. Mods only!", guild=discord.Object(id=current_guild_id))
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
-async def add_question(interaction, contest_name: str, answer: float, points: int, problem_number: int = None):
+async def add_question(interaction, contest_name: str, answer: float, points: int, problem_number: int | None = None):
   contest = database.get_contest(contest_name)
   try:
     if problem_number is None:
@@ -430,7 +426,7 @@ async def team_rankings(interaction, contest_name: str):
     rankingString = ""
     counter = 1
     for team in contest.team_rankings:
-      rankingString += "#{rank}: {teamName}, with {points} points. \n".format(rank = counter, teamName = team.name, points = team.totalPoints)
+      rankingString += "#{rank}: {teamName}, with {points} points. \n".format(rank = counter, teamName = team.name, points = team.total_points)
       counter += 1
     try:
       await interaction.response.send_message(rankingString)
@@ -503,7 +499,7 @@ async def sync_commands(interaction: discord.Interaction):
 
 @tree.command(name = "sync_global", description="[Bot administrators only]")
 @discord.app_commands.check(is_admin)
-async def sync_commands(interaction: discord.Interaction):
+async def sync_commands_globally(interaction: discord.Interaction):
   await interaction.response.defer(thinking=True)
   await tree.sync()
   await interaction.followup.send("Commands synced across all guilds.")
@@ -562,7 +558,6 @@ async def db_keys(interaction):
       str(database.storage_api.get_keys()),
       ephemeral=True
     )
-
   except DataAPIException:
     await interaction.response.send_message(
       "DataAPIException.",

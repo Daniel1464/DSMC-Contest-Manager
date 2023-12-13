@@ -11,9 +11,9 @@ class DataStorageAPI:
   def __init__(self, passwordStringKey: str = "password"):
     self.passwordStringKey = passwordStringKey
     self.session = requests.Session()
-    self.session.get("https://data-storage-system.danielchen1464.repl.co")
     self.__local_data: dict[str,str] = {}
     self.remote_data_out_of_sync = False
+    self.session.get("https://data-storage-system.danielchen1464.repl.co")
 
   def get_local_data(self):
     return self.__local_data
