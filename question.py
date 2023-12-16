@@ -1,8 +1,10 @@
+from contest import Contest
 class Question:
-  def __init__(self, contest_instance, correct_answer: float, point_value: int):
-    self.contest_instance = contest_instance
+  def __init__(self, contest_instance: Contest, correct_answer: float, point_value: int):
+    self.contest_instance: Contest = contest_instance
     self.correct_answer = correct_answer
     self.point_value = point_value
+
 
   def get_data(self) -> dict:
     return {

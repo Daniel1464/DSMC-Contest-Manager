@@ -8,23 +8,24 @@ from customExceptions import (
   TeamSizeExceededException,
   WrongPeriodException
 )
+from contest import Contest
 
 
 class Team:
   def __init__(
       self, 
-      contest_instance, 
+      contest_instance: Contest, 
       name: str, 
       owner_id: int, 
       member_ids: list = [], 
       invited_member_ids: list = []
   ):
-    if contest_instance.team_size_limit is not None and len(member_ids) > contest_instance.teamSizeLimit:
+    if contest_instance.team_size_limit is not None and len(member_ids) > contest_instance.team_size_limit:
       raise TeamSizeExceededException
     else:
       self.submitRanking = 0
       self.answersSubmitted = False
-      self.contestInstance = contest_instance
+      self.contestInstance: Contest = contest_instance
       self.name = name
       self.owner_id = owner_id
       self.member_ids = member_ids
@@ -51,7 +52,7 @@ class Team:
       raise MemberNotInvitedException
     if memberID in self.contestInstance.all_contest_participants:
       raise MemberInAnotherTeamException
-    if self.contestInstance.teamSizeLimit is None or len(self.member_ids) < self.contestInstance.teamSizeLimit:
+    if self.contestInstance.team_size_limit is None or len(self.member_ids) < self.contestInstance.team_size_limit:
       self.member_ids.append(memberID)
     else:
       raise TeamSizeExceededException
@@ -78,8 +79,8 @@ class Team:
   def submit_answers(self):
     if self.contestInstance.period == ContestPeriod.competition:
       self.answersSubmitted = True
-      self.submitRanking = self.contestInstance.teamSubmitOrder
-      self.contestInstance.teamSubmitOrder += 1
+      self.submitRanking = self.contestInstance.team_submit_order
+      self.contestInstance.team_submit_order += 1
     else:
       raise WrongPeriodException(ContestPeriod.competition)
 
