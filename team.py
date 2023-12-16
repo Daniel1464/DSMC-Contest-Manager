@@ -19,7 +19,7 @@ class Team:
       member_ids: list = [], 
       invited_member_ids: list = []
   ):
-    if contest_instance.teamSizeLimit is not None and len(member_ids) > contest_instance.teamSizeLimit:
+    if contest_instance.team_size_limit is not None and len(member_ids) > contest_instance.teamSizeLimit:
       raise TeamSizeExceededException
     else:
       self.submitRanking = 0

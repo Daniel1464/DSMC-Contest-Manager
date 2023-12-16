@@ -9,7 +9,6 @@ from customExceptions import (
   WrongPeriodException
 )
 from contestPeriod import ContestPeriod
-from typing import Any
 
 
 class Contest:
@@ -18,15 +17,15 @@ class Contest:
       self, 
       name: str, 
       link: str, 
-      teamSizeLimit: int | None = None, 
-      totalTeamsLimit: int | None = None, 
+      team_size_limit: int | None = None, 
+      total_teams_limit: int | None = None, 
       questions: list[Question] = [], 
       teams: list[Team] = [] 
   ):
     self.name = name
     self.link = link
-    self.team_size_limit = teamSizeLimit
-    self.total_teams_limit = totalTeamsLimit
+    self.team_size_limit = team_size_limit
+    self.total_teams_limit = total_teams_limit
     # used to keep track who submitted first, second, third, etc.
     self.team_submit_order = 1
     # used to keep track of which period the contest is currently in
@@ -49,18 +48,18 @@ class Contest:
     for team in self.__teams:
       if team.owner_id not in ids:
         ids.append(team.owner_id)
-      for memberID in team.member_ids:
-        if memberID not in ids:
-          ids.append(memberID)
+      for member_id in team.member_ids:
+        if member_id not in ids:
+          ids.append(member_id)
     return ids
 
   @property
   def all_invited_members(self) -> list:
     ids = []
     for team in self.__teams:
-      for memberID in team.invited_member_ids:
-        if memberID not in ids:
-          ids.append(memberID)
+      for member_id in team.invited_member_ids:
+        if member_id not in ids:
+          ids.append(member_id)
     return ids
 
   @property
@@ -94,9 +93,9 @@ class Contest:
   # inputting a question object into object.remove_question() will cause it to remove the question,
   # while inputting a question number into the function will cause it to remove the question with that number.
   @singledispatch
-  def remove_question(self, questionNumber: int):
+  def remove_question(self, question_number: int):
     if self.period == ContestPeriod.preSignup or self.period == ContestPeriod.signup:
-      self.__questions.pop(questionNumber-1)
+      self.__questions.pop(question_number-1)
     else:
       raise WrongPeriodException(ContestPeriod.preSignup, ContestPeriod.signup)
 
@@ -107,9 +106,9 @@ class Contest:
     else:
       raise WrongPeriodException(ContestPeriod.preSignup, ContestPeriod.signup)
 
-  def get_question(self, questionNumber: int) -> Question:
+  def get_question(self, question_number: int) -> Question:
     try:
-      return self.__questions[questionNumber-1]
+      return self.__questions[question_number-1]
     except:
       raise IndexError
 
@@ -139,21 +138,21 @@ class Contest:
     self.__teams.remove(team)
 
   @remove_team.register
-  def _(self, teamName: str):
+  def _(self, team_name: str):
     for team in self.__teams:
-      if team.name == teamName:
+      if team.name == team_name:
         self.__teams.remove(team)
         return
 
-  def get_team(self, teamName: str) -> Team:
+  def get_team(self, team_name: str) -> Team:
     for team in self.__teams:
-      if team.name.lower() == teamName.lower():
+      if team.name.lower() == team_name.lower():
         return team
     raise TeamNotInContestException
 
-  def get_team_of_user(self, userID: int) -> Team | None:
+  def get_team_of_user(self, user_id: int) -> Team | None:
     for team in self.__teams:
-      if team.member_in_team(userID):
+      if team.member_in_team(user_id):
         return team
     return None
 
