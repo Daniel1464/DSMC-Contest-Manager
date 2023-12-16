@@ -25,7 +25,7 @@ client: discord.Client = discord.Client(intents=intents)
 tree: discord.app_commands.CommandTree = discord.app_commands.CommandTree(client)
 
 # important!
-current_guild_id: int = 624314920158232616
+current_guild_id: int = 946049970727968798
 database: ContestDatabase = ContestDatabase('password')
 
 
@@ -55,7 +55,6 @@ async def on_app_command_error(interaction, error):
   logging.warning(error)
 
 
-# functional
 @tree.command(name = "create_contest", description = "MOD ONLY. Creates a new Contest.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def create_contest(interaction, name: str, link: str, team_size_limit: int | None = None, total_teams_limit: int | None = None):
@@ -64,11 +63,10 @@ async def create_contest(interaction, name: str, link: str, team_size_limit: int
   database.update_contest(newContest)
 
 
-# functional
-async def contest_name_autocompletion(interaction: discord.Interaction, current: str):
+async def contest_name_autocompletion(interaction, current: str):
   data = []
-  for contestName in database.get_all_contest_names():
-    data.append(discord.app_commands.Choice(name=contestName.lower(), value=contestName))
+  for contest_name in database.get_all_contest_names():
+    data.append(discord.app_commands.Choice(name=contest_name.lower(), value=contest_name))
   return data
 
 
@@ -81,22 +79,26 @@ async def all_contest_competitors(interaction, contest_name: str):
   await interaction.response.send_message("These people are currently in a team: \n" + str(all_participants) + "\n These people are currently invited to a team: " + str(all_invited_participants))
 
 
-# this command allows a user to register their own team, along with 3 invited members.
 @tree.command(name = "register_team", description = "Registers a team into a contest. ", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def register_team(interaction, contest_name: str, team_name: str, member_two: discord.Member | None = None, member_three: discord.Member | None = None, member_four: discord.Member | None = None):
-  inviteList = []
-  if member_two is not None: inviteList.append(member_two)
-  if member_three is not None: inviteList.append(member_three)
-  if member_four is not None: inviteList.append(member_four)
+  invite_list: list[discord.Member] = []
+  if member_two is not None: invite_list.append(member_two)
+  if member_three is not None: invite_list.append(member_three)
+  if member_four is not None: invite_list.append(member_four)
 
   contest = database.get_contest(contest_name)
   try:
-    newTeam = Team(contest_instance = contest, name = team_name, owner_id = interaction.user.id, invited_member_ids = [member.id for member in inviteList])
+    newTeam = Team(
+      contest_instance = contest, 
+      name = team_name, 
+      owner_id = interaction.user.id, 
+      invited_member_ids = [member.id for member in invite_list]
+    )
     contest.add_team(newTeam)
     print(newTeam.get_data())
-    await interaction.response.send_message("Team '{teamName}' has been added to the contest with the users {members} invited. In order for them to join your team, they must use /join_team {teamName}.".format(members = [member.display_name for member in inviteList], teamName = team_name))
-    for member in inviteList:
+    await interaction.response.send_message("Team '{teamName}' has been added to the contest with the users {members} invited. In order for them to join your team, they must use /join_team {teamName}.".format(members = [member.display_name for member in invite_list], teamName = team_name))
+    for member in invite_list:
       channel = await member.create_dm()
       await channel.send("The user {user} has invited you to join the team '{teamName}' for the contest '{contestName}'. In order to join, use '/join_team {teamName}' in the Mathematics Server (it doesn't work within DMs). If you don't want to join, ignore this message.".format(user = interaction.user, contestName = contest.name, teamName = team_name))
     database.update_contest(contest)
@@ -133,7 +135,7 @@ async def invite_more_members(interaction, contest_name: str, member_one: discor
   await interaction.response.send_message(message)
 
 
-async def team_name_autocompletion(interaction: discord.Interaction, current: str):
+async def team_name_autocompletion(interaction, current: str):
   contest_name = interaction.namespace.contest_name
   contest = database.get_contest(contest_name)
   team_name_choices = []
@@ -143,7 +145,6 @@ async def team_name_autocompletion(interaction: discord.Interaction, current: st
   return team_name_choices
 
 
-# this command allows a user to join a team. @tree.command represents a slash command.
 @tree.command(name = "join_team", description = "Join one of the teams you were invited to.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = team_name_autocompletion)
 async def join_team(interaction, contest_name: str, team_name: str):
@@ -483,13 +484,13 @@ async def remove_member_from_team(interaction, contest_name: str, team_name: str
     database.update_contest(contest)
 
 
-def is_admin(interaction: discord.Interaction):
+def is_admin(interaction):
   return interaction.user.id in [614549755342880778, 757741186432630884]
 
 
 @tree.command(name = "sync", description="[Bot administrators only]") # type: ignore[arg-type]
 @discord.app_commands.check(is_admin)
-async def sync_commands(interaction: discord.Interaction):
+async def sync_commands(interaction):
   await interaction.response.defer(thinking=True)
   await tree.sync(guild=discord.Object(id=current_guild_id))
   await interaction.followup.send("Commands synced.")
@@ -497,7 +498,7 @@ async def sync_commands(interaction: discord.Interaction):
 
 @tree.command(name = "sync_global", description="[Bot administrators only]") # type: ignore[arg-type]
 @discord.app_commands.check(is_admin)
-async def sync_commands_globally(interaction: discord.Interaction):
+async def sync_commands_globally(interaction):
   await interaction.response.defer(thinking=True)
   await tree.sync()
   await interaction.followup.send("Commands synced across all guilds.")
@@ -509,9 +510,10 @@ async def sync_commands_globally(interaction: discord.Interaction):
 
 db_group = discord.app_commands.Group(name="db", description="[Bot administrators only]")
 
+
 @db_group.command(name="get") # type: ignore[arg-type]
 @discord.app_commands.check(is_admin)
-async def db_get(interaction: discord.Interaction, key: str):
+async def db_get(interaction, key: str):
   try:
     value = database.storage_api.get_value(key, evaluate=True)
     await interaction.response.send_message(str(value), ephemeral=True)

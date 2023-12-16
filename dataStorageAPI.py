@@ -15,7 +15,7 @@ class DataStorageAPI:
     self.remote_data_out_of_sync = False
     self.session.get("https://data-storage-system.danielchen1464.repl.co")
 
-  def get_local_data(self):
+  def get_local_data(self) -> dict[str,str]:
     return self.__local_data
 
   def get_keys(self) -> list[str]:

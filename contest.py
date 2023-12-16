@@ -70,7 +70,7 @@ class Contest:
   def team_rankings(self) -> list[Team]:
     if self.period == ContestPeriod.competition or self.period == ContestPeriod.postCompetition:
       # note: the team ranking is negated here because it's sorting by reverse(the higher the key, the farther up it appears.)
-      return sorted(self.__teams, reverse = True, key = lambda team: (team.total_points, -team.submitRanking))
+      return sorted(self.__teams, reverse = True, key = lambda team: (team.total_points, -team.submit_ranking))
     else:
       raise WrongPeriodException(ContestPeriod.competition, ContestPeriod.postCompetition)
 
@@ -159,7 +159,7 @@ class Contest:
   def get_winner(self) -> Team | None:
     if self.period == ContestPeriod.competition or self.period == ContestPeriod.postCompetition:
       topRankedTeam = self.team_rankings[0]
-      if topRankedTeam.answersSubmitted:
+      if topRankedTeam.answers_submitted:
         return topRankedTeam
       else:
         return None

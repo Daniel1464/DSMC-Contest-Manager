@@ -6,6 +6,7 @@ class BadEnvironmentalVarException(Exception):
       "You tried to access an ENV var that either wasn't defined, or wasn't defined properly. " +
       "\n Remember to set up the 'token' and 'password' ENVs!!!!!!"
     )
+    
 
 class TeamNameException(Exception):
   def __init__(self):
@@ -32,7 +33,6 @@ class MemberNotInTeamException(Exception):
     super().__init__("This member is not in the team specified.")
 
 
-
 class AnswersAlreadySubmittedException(Exception):
   def __init__(self):
     super().__init__("The team that has attempted to answer a question has already submitted all of their answers.")
@@ -56,6 +56,7 @@ class MemberNotInvitedException(Exception):
 class WrongPeriodException(Exception):
   def __init__(self, *correctPeriods: ContestPeriod):
     super().__init__("This function can only be accessed during these periods: " + str(correctPeriods))
+
 
 class OwnerLeaveTeamException(Exception):
   def __init__(self):

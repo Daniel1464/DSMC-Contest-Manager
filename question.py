@@ -1,6 +1,11 @@
+# this is the only way to prevent circular imports; which is only importing contest if 
+# type checking is happening, which does not occur at runtime
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING: from contest import Contest
+
 class Question:
-  def __init__(self, contest_instance, correct_answer: float, point_value: int):
-    from contest import Contest
+  def __init__(self, contest_instance: Contest, correct_answer: float, point_value: int):
     self.contest_instance: Contest = contest_instance
     self.correct_answer = correct_answer
     self.point_value = point_value
