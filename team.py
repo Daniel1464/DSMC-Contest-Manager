@@ -8,13 +8,12 @@ from customExceptions import (
   TeamSizeExceededException,
   WrongPeriodException
 )
-from contest import Contest
 
 
 class Team:
   def __init__(
       self, 
-      contest_instance: Contest, 
+      contest_instance, 
       name: str, 
       owner_id: int, 
       member_ids: list = [], 
@@ -25,6 +24,7 @@ class Team:
     else:
       self.submitRanking = 0
       self.answersSubmitted = False
+      from contest import Contest
       self.contestInstance: Contest = contest_instance
       self.name = name
       self.owner_id = owner_id

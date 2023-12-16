@@ -56,7 +56,7 @@ async def on_app_command_error(interaction, error):
 
 
 # functional
-@tree.command(name = "create_contest", description = "MOD ONLY. Creates a new Contest.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "create_contest", description = "MOD ONLY. Creates a new Contest.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def create_contest(interaction, name: str, link: str, team_size_limit: int | None = None, total_teams_limit: int | None = None):
   newContest = Contest(name.lower(), link, team_size_limit, total_teams_limit)
@@ -72,7 +72,7 @@ async def contest_name_autocompletion(interaction: discord.Interaction, current:
   return data
 
 
-@tree.command(name = "all_contest_competitors", description = "Displays all contest competitors", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "all_contest_competitors", description = "Displays all contest competitors", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def all_contest_competitors(interaction, contest_name: str):
   contest = database.get_contest(contest_name)
@@ -82,7 +82,7 @@ async def all_contest_competitors(interaction, contest_name: str):
 
 
 # this command allows a user to register their own team, along with 3 invited members.
-@tree.command(name = "register_team", description = "Registers a team into a contest. ", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "register_team", description = "Registers a team into a contest. ", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def register_team(interaction, contest_name: str, team_name: str, member_two: discord.Member | None = None, member_three: discord.Member | None = None, member_four: discord.Member | None = None):
   inviteList = []
@@ -109,7 +109,7 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
       await interaction.response.send_message("Oh no.... something seriously wrong has occurred. Please consult @DanielRocksUrMom for follow up(Error: Member is in another team exception has been thrown, but the user hasn't joined a team yet.")
 
 
-@tree.command(name = "invite_more_members", description = "Invites more members to your team", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "invite_more_members", description = "Invites more members to your team", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def invite_more_members(interaction, contest_name: str, member_one: discord.Member | None = None, member_two: discord.Member | None = None, member_three: discord.Member | None = None):
   contest = database.get_contest(contest_name)
@@ -144,7 +144,7 @@ async def team_name_autocompletion(interaction: discord.Interaction, current: st
 
 
 # this command allows a user to join a team. @tree.command represents a slash command.
-@tree.command(name = "join_team", description = "Join one of the teams you were invited to.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "join_team", description = "Join one of the teams you were invited to.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = team_name_autocompletion)
 async def join_team(interaction, contest_name: str, team_name: str):
   contest = database.get_contest(contest_name)
@@ -162,7 +162,7 @@ async def join_team(interaction, contest_name: str, team_name: str):
     await interaction.response.send_message("You've already joined another team! Use /leave_current_team to leave your current team, then use /join_team to join this one.", ephemeral = True)
 
 
-@tree.command(name = "change_team_name", description = "Change the name of the team you are in.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "change_team_name", description = "Change the name of the team you are in.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def change_team_name(interaction, contest_name: str, new_team_name: str):
   contest = database.get_contest(contest_name)
@@ -178,7 +178,7 @@ async def change_team_name(interaction, contest_name: str, new_team_name: str):
     await interaction.response.send_message("It seems that you are not in a team currently.", ephemeral = True)
 
 
-@tree.command(name = "modify_team_size_limit", description = "MOD ONLY. Modifies the team size limit for a contest. ", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "modify_team_size_limit", description = "MOD ONLY. Modifies the team size limit for a contest. ", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def modify_team_size_limit(interaction, contest_name: str, size_limit: int):
@@ -187,7 +187,7 @@ async def modify_team_size_limit(interaction, contest_name: str, size_limit: int
   database.update_contest(contest)
 
 
-@tree.command(name = "modify_total_teams_limit", description = "MOD ONLY. Modifies the total teams limit for a contest. ", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "modify_total_teams_limit", description = "MOD ONLY. Modifies the total teams limit for a contest. ", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def modify_total_teams_limit(interaction, contest_name: str, teams_limit: int):
@@ -196,8 +196,7 @@ async def modify_total_teams_limit(interaction, contest_name: str, teams_limit: 
   database.update_contest(contest)
 
 
-# untested
-@tree.command(name = "leave_current_team", description = "Leaves your current team in the respective contest.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "leave_current_team", description = "Leaves your current team in the respective contest.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def leave_current_team(interaction, contest_name: str):
   contest = database.get_contest(contest_name)
@@ -215,8 +214,7 @@ async def leave_current_team(interaction, contest_name: str):
       await interaction.response.send_message("Looks like something went wrong. Please contact @DanielRocksUrMom to follow up with him(Error code 1)")
 
 
-# untested
-@tree.command(name = "transfer_ownership", description = "If you are the owner of a team, transfers ownership to another person within your team.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "transfer_ownership", description = "If you are the owner of a team, transfers ownership to another person within your team.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def transfer_ownership(interaction, contest_name: str, new_owner: discord.Member):
   try:
@@ -234,8 +232,8 @@ async def transfer_ownership(interaction, contest_name: str, new_owner: discord.
     await interaction.response.send_message("The member that you tried to transfer ownership in is not in the team(or hasn't accepted the invite yet).")
 
 
-# untested
-@tree.command(name = "unregister_team", description = "Unregisters your team ", guild=discord.Object(id=current_guild_id))
+
+@tree.command(name = "unregister_team", description = "Unregisters your team ", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def unregister_team(interaction, contest_name: str):
   contest = database.get_contest(contest_name)
@@ -253,7 +251,7 @@ async def unregister_team(interaction, contest_name: str):
     database.update_contest(contest)
 
 
-@tree.command(name = "add_question", description = "MOD ONLY. Adds a question into a contest. Mods only!", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "add_question", description = "MOD ONLY. Adds a question into a contest. Mods only!", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def add_question(interaction, contest_name: str, answer: float, points: int, problem_number: int | None = None):
@@ -269,7 +267,7 @@ async def add_question(interaction, contest_name: str, answer: float, points: in
     await interaction.response.send_message("currently, the contest is underway. You cannot add questions at this time.")
 
 
-@tree.command(name = "remove_question", description = "MOD ONLY. Removes a question from a specified contest.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "remove_question", description = "MOD ONLY. Removes a question from a specified contest.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def remove_question(interaction, contest_name: str, question_number: int):
@@ -281,7 +279,7 @@ async def remove_question(interaction, contest_name: str, question_number: int):
     await interaction.response.send_message("The competition is underway, so you cannot add or remove questions.")
 
 
-@tree.command(name = "change_contest_period", description = "MOD ONLY. changes the period of a contest.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "change_contest_period", description = "MOD ONLY. changes the period of a contest.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.choices(period_name = [
     discord.app_commands.Choice(name = 'pre-signup', value = 'pre-signup'),
@@ -306,7 +304,7 @@ async def change_contest_period(interaction, contest_name: str, period_name: str
   await interaction.response.send_message("Success! The contest period has been changed to " + str(period))
 
 
-@tree.command(name = "create_contest_channels", description = "MOD ONLY. Creates the private channels for all of the teams.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "create_contest_channels", description = "MOD ONLY. Creates the private channels for all of the teams.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def create_contest_channels(interaction, contest_name: str):
@@ -335,7 +333,7 @@ async def create_contest_channels(interaction, contest_name: str):
 
 
 # untested.
-@tree.command(name = "delete_contest_channels", description = "MOD ONLY. Deletes all of the contest channels", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "delete_contest_channels", description = "MOD ONLY. Deletes all of the contest channels", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def delete_contest_channels(interaction, contest_name: str):
@@ -346,7 +344,7 @@ async def delete_contest_channels(interaction, contest_name: str):
   await interaction.response.send_message("All contest channels deleted!.")
 
 
-@tree.command(name = "answer_question", description = "answer a question on a specific test", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "answer_question", description = "answer a question on a specific test", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def answer_question(interaction, contest_name: str, question_number: int, answer: float):
   try:
@@ -366,7 +364,7 @@ async def answer_question(interaction, contest_name: str, question_number: int, 
     await interaction.response.send_message("Sorry, but the contest doesn't have a problem with number " + str(question_number))
 
 
-@tree.command(name = "submit_all_answers", description = "Submits your teams' answers. Once you submit, you CANNOT unsubmit!", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "submit_all_answers", description = "Submits your teams' answers. Once you submit, you CANNOT unsubmit!", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion)
 async def submit_team_answers(interaction, contest_name: str):
   try:
@@ -382,7 +380,7 @@ async def submit_team_answers(interaction, contest_name: str):
     await interaction.response.send_message("Sorry, but you cannot submit any answers right now, as the contest is not in the competition period.")
 
 
-@tree.command(name = "question_answer_score", description = "MOD ONLY. gets the answer and point value of all of the questions within the specified contest.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "question_answer_score", description = "MOD ONLY. gets the answer and point value of all of the questions within the specified contest.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def question_answer_score(interaction, contest_name: str):
@@ -398,7 +396,7 @@ async def question_answer_score(interaction, contest_name: str):
     await interaction.response.send_message("Hmm... There doesn't seem to be any teams at the moment.")
 
 
-@tree.command(name = "link", description = "gets the link of a contest.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "link", description = "gets the link of a contest.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion)
 async def link(interaction, contest_name: str):
   contest = database.get_contest(contest_name)
@@ -408,7 +406,7 @@ async def link(interaction, contest_name: str):
     await interaction.response.send_message("Sorry, you cannot access this right now.", ephemeral = True)
 
 
-@tree.command(name = "change_link", description = "MOD ONLY. changes the link of a contest.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "change_link", description = "MOD ONLY. changes the link of a contest.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def change_link(interaction, contest_name: str, new_link: str):
@@ -418,7 +416,7 @@ async def change_link(interaction, contest_name: str, new_link: str):
   await interaction.response.send_message("Link has been changed!")
 
 
-@tree.command(name = "team_rankings", description = "get the team rankings for the specified contest.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "team_rankings", description = "get the team rankings for the specified contest.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion)
 async def team_rankings(interaction, contest_name: str):
   try:
@@ -436,7 +434,7 @@ async def team_rankings(interaction, contest_name: str):
     await interaction.response.send_message("The competition hasn't started yet, and thus there aren't any rankings. Use /all_teams to get a list of every team.")
 
 
-@tree.command(name = "all_teams", description = "shows all teams, as well as which members are in each team.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "all_teams", description = "shows all teams, as well as which members are in each team.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion)
 async def all_teams(interaction, contest_name: str):
   contest = database.get_contest(contest_name)
@@ -450,7 +448,7 @@ async def all_teams(interaction, contest_name: str):
   await interaction.response.send_message("All teams: \n" + allTeamsString)
 
 
-@tree.command(name = "delete_contest", description = "MOD ONLY. deletes a contest. WARNING - avoid using this command.", guild=discord.Object(id=current_guild_id))
+@tree.command(name = "delete_contest", description = "MOD ONLY. deletes a contest. WARNING - avoid using this command.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def delete_contest(interaction, contest_name: str):
@@ -458,7 +456,7 @@ async def delete_contest(interaction, contest_name: str):
   await interaction.response.send_message("Contest has been deleted!")
 
 
-@tree.command(name = "remove_member_from_team", description = "MOD ONLY. Removes a member from a team.", guild = discord.Object(id=current_guild_id))
+@tree.command(name = "remove_member_from_team", description = "MOD ONLY. Removes a member from a team.", guild = discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = team_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def remove_member_from_team(interaction, contest_name: str, team_name: str, member: discord.Member):
@@ -489,7 +487,7 @@ def is_admin(interaction: discord.Interaction):
   return interaction.user.id in [614549755342880778, 757741186432630884]
 
 
-@tree.command(name = "sync", description="[Bot administrators only]")
+@tree.command(name = "sync", description="[Bot administrators only]") # type: ignore[arg-type]
 @discord.app_commands.check(is_admin)
 async def sync_commands(interaction: discord.Interaction):
   await interaction.response.defer(thinking=True)
@@ -497,7 +495,7 @@ async def sync_commands(interaction: discord.Interaction):
   await interaction.followup.send("Commands synced.")
 
 
-@tree.command(name = "sync_global", description="[Bot administrators only]")
+@tree.command(name = "sync_global", description="[Bot administrators only]") # type: ignore[arg-type]
 @discord.app_commands.check(is_admin)
 async def sync_commands_globally(interaction: discord.Interaction):
   await interaction.response.defer(thinking=True)
@@ -511,7 +509,7 @@ async def sync_commands_globally(interaction: discord.Interaction):
 
 db_group = discord.app_commands.Group(name="db", description="[Bot administrators only]")
 
-@db_group.command(name="get")
+@db_group.command(name="get") # type: ignore[arg-type]
 @discord.app_commands.check(is_admin)
 async def db_get(interaction: discord.Interaction, key: str):
   try:
@@ -524,7 +522,7 @@ async def db_get(interaction: discord.Interaction, key: str):
     )
 
 
-@db_group.command(name="set")
+@db_group.command(name="set") # type: ignore[arg-type]
 @discord.app_commands.check(is_admin)
 async def db_set(interaction, key: str, value: str):
   try:
@@ -537,7 +535,7 @@ async def db_set(interaction, key: str, value: str):
     )
 
 
-@db_group.command(name="del")
+@db_group.command(name="del") # type: ignore[arg-type]
 @discord.app_commands.check(is_admin)
 async def db_del(interaction, key: str):
   try:
@@ -550,7 +548,7 @@ async def db_del(interaction, key: str):
     )
 
 
-@db_group.command(name="keys")
+@db_group.command(name="keys") # type: ignore[arg-type]
 @discord.app_commands.check(is_admin)
 async def db_keys(interaction):
   try:

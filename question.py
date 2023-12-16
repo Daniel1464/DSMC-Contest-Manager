@@ -1,6 +1,6 @@
-from contest import Contest
 class Question:
-  def __init__(self, contest_instance: Contest, correct_answer: float, point_value: int):
+  def __init__(self, contest_instance, correct_answer: float, point_value: int):
+    from contest import Contest
     self.contest_instance: Contest = contest_instance
     self.correct_answer = correct_answer
     self.point_value = point_value
