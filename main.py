@@ -63,7 +63,7 @@ async def create_contest(interaction, name: str, link: str, team_size_limit: int
   database.update_contest(newContest)
 
 
-async def contest_name_autocompletion(interaction, current: str):
+async def contest_name_autocompletion(interaction, current: str) -> list:
   data = []
   for contest_name in database.get_all_contest_names():
     data.append(discord.app_commands.Choice(name=contest_name.lower(), value=contest_name))
@@ -89,14 +89,14 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
 
   contest = database.get_contest(contest_name)
   try:
-    newTeam = Team(
+    new_team = Team(
       contest_instance = contest, 
       name = team_name, 
       owner_id = interaction.user.id, 
       invited_member_ids = [member.id for member in invite_list]
     )
-    contest.add_team(newTeam)
-    print(newTeam.get_data())
+    contest.add_team(new_team)
+    print(new_team.get_data())
     await interaction.response.send_message("Team '{teamName}' has been added to the contest with the users {members} invited. In order for them to join your team, they must use /join_team {teamName}.".format(members = [member.display_name for member in invite_list], teamName = team_name))
     for member in invite_list:
       channel = await member.create_dm()
@@ -174,7 +174,8 @@ async def change_team_name(interaction, contest_name: str, new_team_name: str):
     database.update_contest(contest)
     await interaction.response.send_message(
       "The team that was previously refferred to as '" +
-      previousname + "' now has the name '" + team.name + "'.")
+      previousname + "' now has the name '" + team.name + "'."
+    )
   else:
     await interaction.response.send_message("It seems that you are not in a team currently.", ephemeral = True)
 
@@ -186,6 +187,7 @@ async def modify_team_size_limit(interaction, contest_name: str, size_limit: int
   contest = database.get_contest(contest_name)
   contest.team_size_limit = size_limit
   database.update_contest(contest)
+  await interaction.response.send_message("Team size limit has been updated to " + str(size_limit) + ".")
 
 
 @tree.command(name = "modify_total_teams_limit", description = "MOD ONLY. Modifies the total teams limit for a contest. ", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
@@ -195,6 +197,7 @@ async def modify_total_teams_limit(interaction, contest_name: str, teams_limit: 
   contest = database.get_contest(contest_name)
   contest.total_teams_limit = teams_limit
   database.update_contest(contest)
+  await interaction.response.send_message("Total teams limit has been updated to " + str(teams_limit) + ".")
 
 
 @tree.command(name = "leave_current_team", description = "Leaves your current team in the respective contest.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
@@ -484,6 +487,10 @@ async def remove_member_from_team(interaction, contest_name: str, team_name: str
     database.update_contest(contest)
 
 
+
+
+
+
 def is_admin(interaction):
   return interaction.user.id in [614549755342880778, 757741186432630884]
 
@@ -502,10 +509,6 @@ async def sync_commands_globally(interaction):
   await interaction.response.defer(thinking=True)
   await tree.sync()
   await interaction.followup.send("Commands synced across all guilds.")
-
-
-
-
 
 
 db_group = discord.app_commands.Group(name="db", description="[Bot administrators only]")

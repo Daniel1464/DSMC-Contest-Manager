@@ -11,7 +11,6 @@ class ContestDatabase:
     return self.storage_api.get_value(key="all-contest-names", evaluate=True)
 
   def update_contest(self, contest: Contest):
-
     # when we do str(contest.period), it will return ContestPeriod.(SomePeriod)
     # str(contest.period)[contest.period.index(".")+1:] makes it return only the period name.
     # for example, ContestPeriod.preSignup would turn into preSignup.
@@ -26,12 +25,10 @@ class ContestDatabase:
     }
     questions_data = [question.get_data() for question in contest.all_questions]
     teams_data = [team.get_data() for team in contest.all_teams]
-
     all_contest_names: list[str] = self.storage_api.get_value("all-contest-names", evaluate = True)
     if contest.name not in all_contest_names:
       all_contest_names.append(contest.name)
       self.storage_api.set_value("all-contest-names", all_contest_names)
-
     self.storage_api.set_value("{contest}-INFO:".format(contest = contest.name), contest_information)
     self.storage_api.set_value("{contest}-QUESTIONS:".format(contest = contest.name), questions_data)
     self.storage_api.set_value("{contest}-TEAMS:".format(contest = contest.name), teams_data)
