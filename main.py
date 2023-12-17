@@ -25,7 +25,7 @@ client: discord.Client = discord.Client(intents=intents)
 tree: discord.app_commands.CommandTree = discord.app_commands.CommandTree(client)
 
 # important!
-current_guild_id: int = 624314920158232616
+current_guild_id: int = 946049970727968798
 database: ContestDatabase = ContestDatabase('password')
 
 
@@ -74,8 +74,8 @@ async def contest_name_autocompletion(interaction, current: str) -> list:
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def all_contest_competitors(interaction, contest_name: str):
   contest = database.get_contest(contest_name)
-  all_participants = [interaction.guild.get_member(member_id).name for member_id in contest.all_contest_participants]
-  all_invited_participants = [interaction.guild.get_member(member_id).name for member_id in contest.all_invited_members]
+  all_participants = [get_member_repr(interaction, member_id) for member_id in contest.all_contest_participants]
+  all_invited_participants = [get_member_repr(interaction,member_id) for member_id in contest.all_invited_members]
   await interaction.response.send_message("These people are currently in a team: \n" + str(all_participants) + "\n These people are currently invited to a team: " + str(all_invited_participants))
 
 
@@ -143,6 +143,13 @@ async def team_name_autocompletion(interaction, current: str):
     if interaction.user.id in team.invited_member_ids or interaction.user.id == team.owner_id:
       team_name_choices.append(discord.app_commands.Choice(name = team.name.lower(), value = team.name))
   return team_name_choices
+
+def get_member_repr(interaction, member_id: int) -> str:
+  member = interaction.guild.get_member(member_id)
+  if member is None:
+    return "(Member not found)"
+  else:
+    return member.name
 
 
 @tree.command(name = "join_team", description = "Join one of the teams you were invited to.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
@@ -437,19 +444,19 @@ async def team_rankings(interaction, contest_name: str):
   except WrongPeriodException:
     await interaction.response.send_message("The competition hasn't started yet, and thus there aren't any rankings. Use /all_teams to get a list of every team.")
 
-
 @tree.command(name = "all_teams", description = "shows all teams, as well as which members are in each team.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion)
 async def all_teams(interaction, contest_name: str):
   contest = database.get_contest(contest_name)
-  allTeamsString = ""
+  all_teams_string = ""
   for team in contest.all_teams:
-    allTeamsString += "Team '{teamName}', with owner '{owner}' and members {members}, \n".format(
+    all_teams_string += "Team '{teamName}', with owner '{owner}' and members {members}, \n".format(
       teamName = team.name,
-      owner = interaction.guild.get_member(team.owner_id).name,
-      members = [interaction.guild.get_member(member_id).name for member_id in team.member_ids]
+      owner = get_member_repr(interaction, team.owner_id),
+      members = [get_member_repr(interaction,member_id) for member_id in team.member_ids]
     )
-  await interaction.response.send_message("All teams: \n" + allTeamsString)
+    print(all_teams_string)
+  await interaction.response.send_message("All teams: \n" + all_teams_string)
 
 
 @tree.command(name = "delete_contest", description = "MOD ONLY. deletes a contest. WARNING - avoid using this command.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]

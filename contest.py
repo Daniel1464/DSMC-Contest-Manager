@@ -43,7 +43,7 @@ class Contest:
       self.__teams = [Team.from_data(self, data) for data in teams]
 
   @property
-  def all_contest_participants(self) -> list:
+  def all_contest_participants(self) -> list[int]:
     ids = []
     for team in self.__teams:
       if team.owner_id not in ids:
@@ -54,7 +54,7 @@ class Contest:
     return ids
 
   @property
-  def all_invited_members(self) -> list:
+  def all_invited_members(self) -> list[int]:
     ids = []
     for team in self.__teams:
       for member_id in team.invited_member_ids:
@@ -113,7 +113,8 @@ class Contest:
       raise IndexError
 
   @property
-  def all_questions(self): return self.__questions
+  def all_questions(self): 
+    return self.__questions
 
   def add_team(self, newTeam: Team):
     if self.period == ContestPeriod.signup:
