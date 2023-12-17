@@ -25,7 +25,7 @@ client: discord.Client = discord.Client(intents=intents)
 tree: discord.app_commands.CommandTree = discord.app_commands.CommandTree(client)
 
 # important!
-current_guild_id: int = 946049970727968798
+current_guild_id: int = 624314920158232616
 database: ContestDatabase = ContestDatabase('password')
 
 
@@ -74,8 +74,8 @@ async def contest_name_autocompletion(interaction, current: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def all_contest_competitors(interaction, contest_name: str):
   contest = database.get_contest(contest_name)
-  all_participants = [interaction.guild.get_member(memberID).name for memberID in contest.all_contest_participants]
-  all_invited_participants = [interaction.guild.get_member(memberID).name for memberID in contest.all_invited_members]
+  all_participants = [interaction.guild.get_member(member_id).name for member_id in contest.all_contest_participants]
+  all_invited_participants = [interaction.guild.get_member(member_id).name for member_id in contest.all_invited_members]
   await interaction.response.send_message("These people are currently in a team: \n" + str(all_participants) + "\n These people are currently invited to a team: " + str(all_invited_participants))
 
 
@@ -245,8 +245,8 @@ async def unregister_team(interaction, contest_name: str):
     await interaction.response.send_message("Holdup! You can't delete this team, as it was created by someone else. Ask the creator to delete the team. If you want to leave, use /leave_current_team.", ephemeral = True)
   else:
     contest.remove_team(user_team)
-    for memberID in user_team.member_ids:
-      channel = await interaction.guild.get_member(memberID).create_dm()
+    for member_id in user_team.member_ids:
+      channel = await interaction.guild.get_member(member_id).create_dm()
       await channel.send("The original owner of team {teamName} has deleted this team. To sign up for another team, ask another team owner to invite you, then use /join.".format(teamName = user_team.name))
     await interaction.response.send_message("Success!")
     database.update_contest(contest)
@@ -322,8 +322,8 @@ async def create_contest_channels(interaction, contest_name: str):
         admin_role: discord.PermissionOverwrite(read_messages = True),
         interaction.guild.get_member(team.owner_id): discord.PermissionOverwrite(read_messages = True)
       }
-      for memberID in team.member_ids:
-        overwrites[interaction.guild.get_member(memberID)] = discord.PermissionOverwrite(read_messages = True)
+      for member_id in team.member_ids:
+        overwrites[interaction.guild.get_member(member_id)] = discord.PermissionOverwrite(read_messages = True)
       channel = await interaction.guild.create_text_channel(team.name+'-contest-channel', overwrites=overwrites, category = category)
       contest.channel_id_info[team.name] = channel.id
       database.update_contest(contest)
@@ -444,7 +444,7 @@ async def all_teams(interaction, contest_name: str):
     allTeamsString += "Team '{teamName}', with owner '{owner}' and members {members}, \n".format(
       teamName = team.name,
       owner = interaction.guild.get_member(team.owner_id).name,
-      members = [interaction.guild.get_member(memberID).name for memberID in team.member_ids]
+      members = [interaction.guild.get_member(member_id).name for member_id in team.member_ids]
     )
   await interaction.response.send_message("All teams: \n" + allTeamsString)
 
