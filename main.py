@@ -14,6 +14,7 @@ from customExceptions import (
   OwnerLeaveTeamException,
   WrongPeriodException
 )
+
 import traceback
 import logging
 
@@ -25,7 +26,7 @@ client: discord.Client = discord.Client(intents=intents)
 tree: discord.app_commands.CommandTree = discord.app_commands.CommandTree(client)
 
 # important!
-current_guild_id: int = 946049970727968798
+current_guild_id: int = 624314920158232616
 database: ContestDatabase = ContestDatabase('password')
 
 
@@ -275,7 +276,9 @@ async def add_question(interaction, contest_name: str, answer: float, points: in
     database.update_contest(contest)
     await interaction.response.send_message("Success!")
   except WrongPeriodException:
-    await interaction.response.send_message("currently, the contest is underway. You cannot add questions at this time.")
+    await interaction.response.send_message("currently, the contest is underway. You cannot add questions at this time.", ephemeral = True)
+  except IndexError:
+    await interaction.response.send_message("Hmm.... your question index is out of bounds", ephemeral = True)
 
 
 @tree.command(name = "remove_question", description = "MOD ONLY. Removes a question from a specified contest.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
@@ -286,6 +289,7 @@ async def remove_question(interaction, contest_name: str, question_number: int):
   try:
     contest.remove_question(question_number)
     database.update_contest(contest)
+    await interaction.response.send_message("Question with number " + str(question_number) + " has been removed.")
   except WrongPeriodException:
     await interaction.response.send_message("The competition is underway, so you cannot add or remove questions.")
 
@@ -360,13 +364,13 @@ async def delete_contest_channels(interaction, contest_name: str):
 async def answer_question(interaction, contest_name: str, question_number: int, answer: float):
   try:
     contest = database.get_contest(contest_name)
-    userTeam = contest.get_team_of_user(interaction.user.id)
-    if userTeam is not None:
-      userTeam.answer(contest.get_question(question_number), answer)
+    user_team = contest.get_team_of_user(interaction.user.id)
+    if user_team is not None:
+      user_team.answer(contest.get_question(question_number), answer)
     else:
       await interaction.response.send_message("Hmmm..... your team doesn't seem to be found in the contest. Maybe you haven't signed up yet?",ephemeral = True)
     database.update_contest(contest)
-    await interaction.response.send_message(str(interaction.user) + " has answered question #{questionNumber}!".format(questionNumber = question_number))
+    await interaction.response.send_message(str(interaction.user) + " has answered question #{question_number}!".format(question_number = question_number))
   except AnswersAlreadySubmittedException:
     await interaction.response.send_message("Sorry, you have already submitted your answers. Once you submit your answers, you cannot answer anything else.", ephemeral = True)
   except WrongPeriodException:
@@ -397,14 +401,13 @@ async def submit_team_answers(interaction, contest_name: str):
 async def question_answer_score(interaction, contest_name: str):
   contest = database.get_contest(contest_name)
   question_string = ""
-
   for question in contest.all_questions:
     question_string += "Q{questionNumber}: answer = {answer}, points = {pointValue} \n".format(
       questionNumber = question.get_number(), answer = question.correct_answer, pointValue = question.point_value)
-  try:
+  if question_string == "":
+    await interaction.response.send_message("Hmm... There doesn't seem to be any questions in the contest at the moment. To add one, use /add_question.")
+  else:
     await interaction.response.send_message(question_string)
-  except:
-    await interaction.response.send_message("Hmm... There doesn't seem to be any teams at the moment.")
 
 
 @tree.command(name = "link", description = "gets the link of a contest.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
@@ -455,8 +458,21 @@ async def all_teams(interaction, contest_name: str):
       owner = get_member_repr(interaction, team.owner_id),
       members = [get_member_repr(interaction,member_id) for member_id in team.member_ids]
     )
-    print(all_teams_string)
   await interaction.response.send_message("All teams: \n" + all_teams_string)
+
+
+@tree.command(name = "question_info", description = "Shows all the questions of a specific contest. Does not show the answers and/or points.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
+@discord.app_commands.autocomplete(contest_name = contest_name_autocompletion)
+async def question_info(interaction, contest_name: str):
+  contest = database.get_contest(contest_name)
+  all_questions_string = ""
+  for question in contest.all_questions:
+    all_questions_string += "Q" + str(question.get_number())
+    all_questions_string += ": Point Value " + str(question.point_value) + " \n"
+  if all_questions_string == "":
+    await interaction.response.send_message("There is no questions at the moment. The contest might still be in maintenance/signup mode.")
+  else:
+    await interaction.response.send_message("All questions: \n" + all_questions_string)
 
 
 @tree.command(name = "delete_contest", description = "MOD ONLY. deletes a contest. WARNING - avoid using this command.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]

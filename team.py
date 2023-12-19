@@ -12,7 +12,9 @@ from customExceptions import (
 # this is the only way to prevent circular imports; which is only importing contest if 
 # type checking is happening, which does not occur at runtime
 from typing import TYPE_CHECKING
-if TYPE_CHECKING: from contest import Contest
+if TYPE_CHECKING: 
+  from contest import Contest
+  from question import Question
 
 
 class Team:
@@ -69,14 +71,14 @@ class Team:
     else:
       raise MemberNotInTeamException
 
-  def answer(self, question, answer: float):
+  def answer(self, question: Question, answer: float):
     if self.contest_instance.period == ContestPeriod.competition:
       if self.answers_submitted:
         raise AnswersAlreadySubmittedException
-      if question.isCorrect(answer):
-        self.answer_score[question.getNumber()] = question.pointValue
+      if question.is_correct(answer):
+        self.answer_score[question.get_number()] = question.point_value
       else:
-        self.answer_score[question.getNumber()] = 0
+        self.answer_score[question.get_number()] = 0
     else:
       raise WrongPeriodException(ContestPeriod.competition)
 
@@ -88,11 +90,11 @@ class Team:
     else:
       raise WrongPeriodException(ContestPeriod.competition)
 
-  def transfer_ownership(self, newOwnerID: int):
-    if newOwnerID in self.member_ids:
+  def transfer_ownership(self, new_owner_id: int):
+    if new_owner_id in self.member_ids:
       self.member_ids.append(self.owner_id)
-      self.member_ids.remove(newOwnerID)
-      self.owner_id = newOwnerID
+      self.member_ids.remove(new_owner_id)
+      self.owner_id = new_owner_id
     else:
       raise MemberNotInTeamException
 
@@ -101,8 +103,8 @@ class Team:
     if not self.answers_submitted:
       return 0
     total = 0
-    for problemNumber in self.answer_score.keys():
-      total += self.answer_score[problemNumber]
+    for problem_number in self.answer_score.keys():
+      total += self.answer_score[problem_number]
     return total
 
   def get_data(self):
