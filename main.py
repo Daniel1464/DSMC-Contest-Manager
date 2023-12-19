@@ -26,7 +26,7 @@ client: discord.Client = discord.Client(intents=intents)
 tree: discord.app_commands.CommandTree = discord.app_commands.CommandTree(client)
 
 # important!
-current_guild_id: int = 624314920158232616
+current_guild_id: int = int(getenv("current_guild_id"))
 database: ContestDatabase = ContestDatabase('password')
 
 
