@@ -509,6 +509,16 @@ async def remove_member_from_team(interaction, contest_name: str, team_name: str
   finally:
     database.update_contest(contest)
 
+@tree.command(name = "unsubmit_team_answers", description = "MOD ONLY- unsubmits team answers in an emergency scenario", guild = discord.Object(id=current_guild_id)) # type: ignore[arg-type]
+@discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = team_name_autocompletion)
+@discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
+async def unsubmit_team_answers(interaction, contest_name: str, team_name: str):
+  contest: Contest = database.get_contest(contest_name)
+  team: Team = contest.get_team(team_name)
+  team.answers_submitted = False
+  team.submit_ranking = 0
+  database.update_contest(contest)
+  interaction.response.send_message("Success!")
 
 
 
@@ -532,6 +542,11 @@ async def sync_commands_globally(interaction):
   await interaction.response.defer(thinking=True)
   await tree.sync()
   await interaction.followup.send("Commands synced across all guilds.")
+
+@tree.commannd(name = "sync_data_storage_api", description = "[Bot administrators only; syncs data storage api]")
+@discord.app_commands.check(is_admin)
+async def sync_data_storage_api(interaction):
+  
 
 
 db_group = discord.app_commands.Group(name="db", description="[Bot administrators only]")
