@@ -177,12 +177,12 @@ async def change_team_name(interaction, contest_name: str, new_team_name: str):
   contest = database.get_contest(contest_name)
   team = contest.get_team_of_user(interaction.user.id)
   if team is not None:
-    previousname = team.name
+    previous_name = team.name
     team.name = new_team_name
     database.update_contest(contest)
     await interaction.response.send_message(
       "The team that was previously refferred to as '" +
-      previousname + "' now has the name '" + team.name + "'."
+      previous_name + "' now has the name '" + team.name + "'."
     )
   else:
     await interaction.response.send_message("It seems that you are not in a team currently.", ephemeral = True)

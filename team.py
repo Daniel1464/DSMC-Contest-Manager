@@ -114,7 +114,8 @@ class Team:
       "memberIDs": self.member_ids,
       "invitedMemberIDs": self.invited_member_ids,
       "answerScore": self.answer_score,
-      "answersSubmitted": self.answers_submitted
+      "answersSubmitted": self.answers_submitted,
+      "submitRanking": self.submit_ranking
     }
 
   @staticmethod
@@ -128,4 +129,8 @@ class Team:
     )
     team.answer_score = data["answerScore"]
     team.answers_submitted = data["answersSubmitted"]
+    try:
+      team.submit_ranking = data['submitRanking']
+    except:
+      print("submit rankings not posted yet; oops")
     return team
