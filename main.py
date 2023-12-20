@@ -543,10 +543,11 @@ async def sync_commands_globally(interaction):
   await tree.sync()
   await interaction.followup.send("Commands synced across all guilds.")
 
-@tree.commannd(name = "sync_data_storage_api", description = "[Bot administrators only; syncs data storage api]")
+@tree.command(name = "sync_data_storage_api", description = "[Bot administrators only; syncs data storage api]") # type: ignore[arg-type]
 @discord.app_commands.check(is_admin)
 async def sync_data_storage_api(interaction):
-  
+  database.storage_api.reset_local_data()
+  await interaction.response.send_message("Success!")
 
 
 db_group = discord.app_commands.Group(name="db", description="[Bot administrators only]")

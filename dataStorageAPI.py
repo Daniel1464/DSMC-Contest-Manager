@@ -28,8 +28,8 @@ class DataStorageAPI:
     else:
       raise DataAPIException
 
-  def get_value(self, key: str, evaluate: bool = False):
-    if key in self.__local_data:
+  def get_value(self, key: str, evaluate: bool = False, read_from_local_data: bool = True):
+    if key in self.__local_data and read_from_local_data:
       return self.__local_data[key]
     print(self.__local_data)
     res = self.session.get("https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(passcode = getenv(self.passwordStringKey), inputKey = key))
@@ -88,3 +88,6 @@ class DataStorageAPI:
     except:
       print("Data has not successfully resynced; data storage API may be out of date.")
       raise DataAPIException
+  
+  def reset_local_data(self):
+    self.__local_data = {}

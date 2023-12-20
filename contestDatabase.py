@@ -8,7 +8,7 @@ class ContestDatabase:
     self.storage_api = DataStorageAPI(passkey)
 
   def get_all_contest_names(self):
-    return self.storage_api.get_value(key="all-contest-names", evaluate=True)
+    return self.storage_api.get_value(key="all-contest-names", evaluate = True)
 
   def update_contest(self, contest: Contest):
     # when we do str(contest.period), it will return ContestPeriod.(SomePeriod)
@@ -33,6 +33,7 @@ class ContestDatabase:
     self.storage_api.set_value("{contest}-QUESTIONS:".format(contest = contest.name), questions_data)
     self.storage_api.set_value("{contest}-TEAMS:".format(contest = contest.name), teams_data)
 
+    
   def get_contest(self, name: str) -> Contest:
     contest_information: dict = self.storage_api.get_value(key = "{contest}-INFO:".format(contest = name), evaluate = True)
     questions_data: list = self.storage_api.get_value(key = "{contest}-QUESTIONS:".format(contest = name), evaluate = True)
@@ -59,6 +60,6 @@ class ContestDatabase:
     self.storage_api.del_value("{contest}-QUESTIONS:".format(contest = contest_name))
     self.storage_api.del_value("{contest}-TEAMS:".format(contest = contest_name))
 
-    all_contest_names = self.storage_api.get_value("all-contest-names", evaluate=True)
+    all_contest_names = self.storage_api.get_value("all-contest-names", evaluate = True)
     all_contest_names.remove(contest_name)
     self.storage_api.set_value("all-contest-names", all_contest_names)
