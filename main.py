@@ -521,6 +521,7 @@ async def remove_member_from_team(interaction, contest_name: str, team_name: str
   finally:
     database.update_contest(contest)
 
+
 @tree.command(name = "unsubmit_team_answers", description = "MOD ONLY- unsubmits team answers in an emergency scenario", guild = discord.Object(id=current_guild_id)) # type: ignore[arg-type]
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = all_team_names_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
@@ -549,6 +550,7 @@ async def force_transfer_ownership(interaction, contest_name: str, team_name: st
   except MemberNotInTeamException:
     await interaction.response.send_message("The member that you tried to transfer ownership in is not in the team(or hasn't accepted the invite yet).")
 
+
 @tree.command(name = "force_add_members", description = "[Bot administrators only; adds members forcefully to a team.]") # type: ignore[arg-type]
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 @discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = all_team_names_autocompletion)
@@ -559,6 +561,70 @@ async def force_add_members(interaction, contest_name: str, team_name: str, new_
   database.update_contest(contest)
   await interaction.response.send_message("Success!")
 
+
+@tree.command(name = "force_answer_submissions", description = "[Bot administrators only; forcefully submits answers for teams who haven't submitted yet.]") # type: ignore[arg-type]
+@discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
+@discord.app_commands.autocomplete(contest_name = contest_name_autocompletion)
+async def force_team_submissions(interaction, contest_name: str):
+  try:
+    contest = database.get_contest(contest_name)
+    for team in contest.all_teams:
+      if not team.answers_submitted:
+        team.submit_answers()
+    database.update_contest(contest)
+    await interaction.response.send_message("Success!")
+  except WrongPeriodException:
+    await interaction.response.send_message("The period must be ContestPeriod.Competition for this to work.")
+
+
+@tree.command(name = "answer_question_for_team", description = "[Bot administrators only]") # type: ignore[arg-type]
+@discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
+@discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = all_team_names_autocompletion)
+async def answer_question_for_team(interaction, contest_name: str, team_name: str, question_number: int, answer: float):
+  try:
+    contest = database.get_contest(contest_name)
+    team = contest.get_team(team_name)
+    team.answer(contest.get_question(question_number), answer)
+    database.update_contest(contest)
+    await interaction.response.send_message("An admin has answered question #{question_number}!".format(question_number = question_number))
+  except AnswersAlreadySubmittedException:
+    await interaction.response.send_message("Hmm... this team has already submitted their answers.", ephemeral = True)
+  except WrongPeriodException:
+    await interaction.response.send_message("Sorry, you can't submit any answers right now, as the contest period is not the competition period.", ephemeral = True)
+  except IndexError:
+    await interaction.response.send_message("Sorry, but the contest doesn't have a problem with number " + str(question_number))
+
+
+@tree.command(name = "team_answer_score", description = "What your team has answered so far.") # type: ignore[arg-type]
+@discord.app_commands.autocomplete(contest_name = contest_name_autocompletion)
+async def team_answer_score(interaction, contest_name: str):
+  contest = database.get_contest(contest_name)
+  team = contest.get_team_of_user(interaction.user.id)
+  if team is not None:
+    response_str = ""
+    for question_num in team.answer_score.keys():
+      response_str += "Question " + str(question_num) + ": Answered as " + str(team.answer_score[question_num]) + "\n"
+    await interaction.response.send_message(response_str)
+  else:
+    await interaction.response.send_message("Hmmm... your team could not be found.")
+
+@tree.command(name = "team_answer_score_admin", description = "[Bot administrators only]") # type: ignore[arg-type]
+@discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = all_team_names_autocompletion)
+async def team_answer_score_admin(interaction, contest_name: str, team_name: str):
+  contest = database.get_contest(contest_name)
+  team = contest.get_team(team_name)
+  if team is not None:
+    response_str = ""
+    for question_num in team.answer_score.keys():
+      point_val = team.answer_score[question_num]
+      response_str += "Question " + str(question_num) + ":"
+      if point_val > 0:
+        response_str += "(marked as CORRECT) \n"
+      else:
+        response_str += "(marked as WRONG) \n"
+    await interaction.response.send_message(response_str)
+  else:
+    await interaction.response.send_message("Hmmm... the team could not be found.")
 
 
 
