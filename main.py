@@ -29,6 +29,40 @@ tree: discord.app_commands.CommandTree = discord.app_commands.CommandTree(client
 current_guild_id: int = int(getenv("current_guild_id"))
 database: ContestDatabase = ContestDatabase('password')
 
+async def contest_name_autocompletion(interaction, current: str) -> list:
+  data = []
+  for contest_name in database.get_all_contest_names():
+    data.append(discord.app_commands.Choice(name=contest_name.lower(), value=contest_name))
+  return data
+
+async def team_name_autocompletion(interaction, current: str):
+  contest_name = interaction.namespace.contest_name
+  contest = database.get_contest(contest_name)
+  team_name_choices = []
+  for team in contest.all_teams:
+    if interaction.user.id in team.invited_member_ids or interaction.user.id == team.owner_id:
+      team_name_choices.append(discord.app_commands.Choice(name = team.name.lower(), value = team.name))
+  return team_name_choices
+
+async def all_team_names_autocompletion(interaction, current: str):
+  contest = database.get_contest(interaction.namespace.contest_name)
+  team_name_choices: list[discord.app_commands.Choice] = []
+  for team in contest.all_teams:
+    team_name_choices.append(discord.app_commands.Choice(name = team.name.lower(), value = team.name))
+  return team_name_choices
+
+
+def get_member_repr(interaction, member_id: int) -> str:
+  member = interaction.guild.get_member(member_id)
+  if member is None:
+    return "(Member not found)"
+  else:
+    return member.name
+
+
+
+
+
 
 @client.event
 async def on_ready():
@@ -63,12 +97,6 @@ async def create_contest(interaction, name: str, link: str, team_size_limit: int
   await interaction.response.send_message("Contest successfully created!")
   database.update_contest(newContest)
 
-
-async def contest_name_autocompletion(interaction, current: str) -> list:
-  data = []
-  for contest_name in database.get_all_contest_names():
-    data.append(discord.app_commands.Choice(name=contest_name.lower(), value=contest_name))
-  return data
 
 
 @tree.command(name = "all_contest_competitors", description = "Displays all contest competitors", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
@@ -135,22 +163,6 @@ async def invite_more_members(interaction, contest_name: str, member_one: discor
   database.update_contest(contest)
   await interaction.response.send_message(message)
 
-
-async def team_name_autocompletion(interaction, current: str):
-  contest_name = interaction.namespace.contest_name
-  contest = database.get_contest(contest_name)
-  team_name_choices = []
-  for team in contest.all_teams:
-    if interaction.user.id in team.invited_member_ids or interaction.user.id == team.owner_id:
-      team_name_choices.append(discord.app_commands.Choice(name = team.name.lower(), value = team.name))
-  return team_name_choices
-
-def get_member_repr(interaction, member_id: int) -> str:
-  member = interaction.guild.get_member(member_id)
-  if member is None:
-    return "(Member not found)"
-  else:
-    return member.name
 
 
 @tree.command(name = "join_team", description = "Join one of the teams you were invited to.", guild=discord.Object(id=current_guild_id)) # type: ignore[arg-type]
@@ -484,7 +496,7 @@ async def delete_contest(interaction, contest_name: str):
 
 
 @tree.command(name = "remove_member_from_team", description = "MOD ONLY. Removes a member from a team.", guild = discord.Object(id=current_guild_id)) # type: ignore[arg-type]
-@discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = team_name_autocompletion)
+@discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = all_team_names_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def remove_member_from_team(interaction, contest_name: str, team_name: str, member: discord.Member):
   contest: Contest = database.get_contest(contest_name)
@@ -510,7 +522,7 @@ async def remove_member_from_team(interaction, contest_name: str, team_name: str
     database.update_contest(contest)
 
 @tree.command(name = "unsubmit_team_answers", description = "MOD ONLY- unsubmits team answers in an emergency scenario", guild = discord.Object(id=current_guild_id)) # type: ignore[arg-type]
-@discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = team_name_autocompletion)
+@discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = all_team_names_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def unsubmit_team_answers(interaction, contest_name: str, team_name: str):
   contest: Contest = database.get_contest(contest_name)
@@ -518,7 +530,34 @@ async def unsubmit_team_answers(interaction, contest_name: str, team_name: str):
   team.answers_submitted = False
   team.submit_ranking = 0
   database.update_contest(contest)
-  interaction.response.send_message("Success!")
+  await interaction.response.send_message("Success!")
+
+
+@tree.command(name = "force_transfer_ownership", description = "[Bot administrators only; forces team ownership transfer.]") # type: ignore[arg-type]
+@discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
+@discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = all_team_names_autocompletion)
+async def force_transfer_ownership(interaction, contest_name: str, team_name: str, new_owner: discord.Member):
+  try:
+    contest = database.get_contest(contest_name)
+    player_team = contest.get_team(team_name)
+    if player_team is None:
+      await interaction.response.send_message("Hmmm... this team cannot be found", ephemeral = True)
+    else:
+      player_team.transfer_ownership(new_owner.id)
+      database.update_contest(contest)
+      await interaction.response.send_message("Ownership has been successfully transferred to {newOwner}!".format(newOwner = new_owner))
+  except MemberNotInTeamException:
+    await interaction.response.send_message("The member that you tried to transfer ownership in is not in the team(or hasn't accepted the invite yet).")
+
+@tree.command(name = "force_add_members", description = "[Bot administrators only; adds members forcefully to a team.]") # type: ignore[arg-type]
+@discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
+@discord.app_commands.autocomplete(contest_name = contest_name_autocompletion, team_name = all_team_names_autocompletion)
+async def force_add_members(interaction, contest_name: str, team_name: str, new_member: discord.Member):
+  contest = database.get_contest(contest_name)
+  team = contest.get_team(team_name)
+  team.member_ids.append(new_member.id)
+  database.update_contest(contest)
+  await interaction.response.send_message("Success!")
 
 
 
@@ -548,6 +587,7 @@ async def sync_commands_globally(interaction):
 async def sync_data_storage_api(interaction):
   database.storage_api.reset_local_data()
   await interaction.response.send_message("Success!")
+
 
 
 db_group = discord.app_commands.Group(name="db", description="[Bot administrators only]")
