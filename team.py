@@ -1,126 +1,142 @@
-from contestPeriod import ContestPeriod
-
-from customExceptions import (
-  AnswersAlreadySubmittedException,
-  MemberInAnotherTeamException,
-  MemberNotInTeamException,
-  MemberNotInvitedException,
-  OwnerLeaveTeamException,
-  TeamSizeExceededException,
-  WrongPeriodException
+from __future__ import annotations
+from contestperiod import ContestPeriod
+from exceptions import (
+    AnswersAlreadySubmittedException,
+    MemberInAnotherTeamException,
+    MemberNotInTeamException,
+    MemberNotInvitedException,
+    OwnerLeaveTeamException,
+    TeamSizeExceededException,
+    WrongPeriodException
 )
+# this is the only way to prevent circular imports; which is only importing contest if 
+# type checking is happening, which does not occur at runtime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from contest import Contest
+    from question import Question
 
 
 class Team:
-  def __init__(self, contestInstance, name: str, ownerID: int, memberIDs: list = [], invitedMemberIDs: list = []):
-    if contestInstance.teamSizeLimit is not None and len(memberIDs) > contestInstance.teamSizeLimit:
-      raise TeamSizeExceededException
-    else:
-      self.submitRanking = 0
-      self.answersSubmitted = False
-      self.contestInstance = contestInstance
-      self.name = name
-      self.ownerID = ownerID
-      self.memberIDs = memberIDs
-      self.invitedMemberIDs = invitedMemberIDs
-      self.answerScore: dict = {}
+    def __init__(
+            self,
+            contest_instance: Contest,
+            name: str,
+            owner_id: int,
+            member_ids: list[int] = None,
+            invited_member_ids: list[int] = None
+    ):
+        if invited_member_ids is None:
+            invited_member_ids = []
+        if member_ids is None:
+            member_ids = []
+        if contest_instance.team_size_limit is not None and len(member_ids) > contest_instance.team_size_limit:
+            raise TeamSizeExceededException
+        else:
+            self.submit_ranking = 0
+            self.answers_submitted = False
+            self.contest_instance: Contest = contest_instance
+            self.name = name
+            self.owner_id = owner_id
+            self.member_ids = member_ids
+            self.invited_member_ids = invited_member_ids
+            self.answer_score: dict = {}
 
-  def memberInTeam(self, memberID: int) -> bool:
-    return memberID == self.ownerID or memberID in self.memberIDs
+    def member_in_team(self, member_id: int) -> bool:
+        return member_id == self.owner_id or member_id in self.member_ids
 
-  def memberInvitedToTeam(self, memberID: int) -> bool:
-    return memberID in self.invitedMemberIDs
+    def member_invited_to_team(self, member_id: int) -> bool:
+        return member_id in self.invited_member_ids
 
-  def inviteMember(self, memberID: int):
-    self.invitedMemberIDs.append(memberID)
+    def invite_member(self, member_id: int):
+        self.invited_member_ids.append(member_id)
 
-  def uninviteMember(self, memberID: int):
-    try:
-      self.invitedMemberIDs.remove(memberID)
-    except:
-      raise MemberNotInTeamException
+    def uninvite_member(self, member_id: int):
+        try:
+            self.invited_member_ids.remove(member_id)
+        except:
+            raise MemberNotInTeamException
 
-  def addMember(self, memberID: int):
+    def add_member(self, member_id: int):
+        if member_id not in self.invited_member_ids:
+            raise MemberNotInvitedException
+        if member_id in self.contest_instance.all_contest_participants:
+            raise MemberInAnotherTeamException
+        if self.contest_instance.team_size_limit is None or len(
+                self.member_ids) < self.contest_instance.team_size_limit:
+            self.member_ids.append(member_id)
+        else:
+            raise TeamSizeExceededException
 
-    if memberID not in self.invitedMemberIDs:
-      raise MemberNotInvitedException
-      return
+    def remove_member(self, member_id: int):
+        if member_id in self.member_ids:
+            self.member_ids.remove(member_id)
+        elif member_id == self.owner_id:
+            raise OwnerLeaveTeamException
+        else:
+            raise MemberNotInTeamException
 
-    if memberID in self.contestInstance.all_contest_participants:
-      raise MemberInAnotherTeamException
-      return
+    def answer(self, question: Question, answer: float):
+        if self.contest_instance.period == ContestPeriod.competition:
+            if self.answers_submitted:
+                raise AnswersAlreadySubmittedException
+            if question.is_correct(answer):
+                self.answer_score[question.get_number()] = question.point_value
+            else:
+                self.answer_score[question.get_number()] = 0
+        else:
+            raise WrongPeriodException(ContestPeriod.competition)
 
-    if self.contestInstance.teamSizeLimit is None or len(self.memberIDs) < self.contestInstance.teamSizeLimit:
-      self.memberIDs.append(memberID)
-    else:
-      raise TeamSizeExceededException
+    def submit_answers(self):
+        if self.contest_instance.period == ContestPeriod.competition:
+            self.answers_submitted = True
+            self.submit_ranking = self.contest_instance.team_submit_order
+            self.contest_instance.team_submit_order += 1
+        else:
+            raise WrongPeriodException(ContestPeriod.competition)
 
-  def removeMember(self, memberID: int):
-    if memberID in self.memberIDs:
-      self.memberIDs.remove(memberID)
-    elif memberID == self.ownerID:
-      raise OwnerLeaveTeamException
-    else:
-      raise MemberNotInTeamException
+    def transfer_ownership(self, new_owner_id: int):
+        if new_owner_id in self.member_ids:
+            self.member_ids.append(self.owner_id)
+            self.member_ids.remove(new_owner_id)
+            self.owner_id = new_owner_id
+        else:
+            raise MemberNotInTeamException
 
-  def answer(self, question, answer: float):
-    if self.contestInstance.period == ContestPeriod.competition:
-      if self.answersSubmitted:
-        raise AnswersAlreadySubmittedException
-        return
+    @property
+    def total_points(self) -> int:
+        if not self.answers_submitted:
+            return 0
+        total = 0
+        for problem_number in self.answer_score.keys():
+            total += self.answer_score[problem_number]
+        return total
 
-      if question.isCorrect(answer):
-        self.answerScore[question.getNumber()] = question.pointValue
-      else:
-        self.answerScore[question.getNumber()] = 0
-    else:
-      raise WrongPeriodException([ContestPeriod.competition])
+    def get_data(self):
+        return {
+            "name": self.name,
+            "ownerID": self.owner_id,
+            "memberIDs": self.member_ids,
+            "invitedMemberIDs": self.invited_member_ids,
+            "answerScore": self.answer_score,
+            "answersSubmitted": self.answers_submitted,
+            "submitRanking": self.submit_ranking
+        }
 
-  def submit_answers(self):
-    if self.contestInstance.period == ContestPeriod.competition:
-      self.answersSubmitted = True
-      self.submitRanking = self.contestInstance.teamSubmitOrder
-      self.contestInstance.teamSubmitOrder += 1
-    else:
-      raise WrongPeriodException([ContestPeriod.competition])
-
-  def transfer_ownership(self, newOwnerID: int):
-    if newOwnerID in self.memberIDs:
-      self.memberIDs.append(self.ownerID)
-      self.memberIDs.remove(newOwnerID)
-      self.ownerID = newOwnerID
-    else:
-      raise MemberNotInTeamException
-
-  @property
-  def totalPoints(self) -> int:
-    if not self.answersSubmitted:
-      return 0
-
-    total = 0
-    for problemNumber in self.answerScore.keys():
-      total += self.answerScore[problemNumber]
-    return total
-
-  def getData(self):
-    return {
-      "name": self.name,
-      "ownerID": self.ownerID,
-      "memberIDs": self.memberIDs,
-      "invitedMemberIDs": self.invitedMemberIDs,
-      "answerScore": self.answerScore,
-      "answersSubmitted": self.answersSubmitted
-    }
-
-  @staticmethod
-  def fromData(contestInstance, data: dict):
-    team = Team(
-      contestInstance,
-      data["name"],
-      data["ownerID"],
-      data["memberIDs"],
-      data["invitedMemberIDs"]
-    )
-    team.answerScore = data["answerScore"]
-    team.answersSubmitted = data["answersSubmitted"]
-    return team
+    @staticmethod
+    def from_data(contest_instance, data: dict):
+        team = Team(
+            contest_instance,
+            data["name"],
+            data["ownerID"],
+            data["memberIDs"],
+            data["invitedMemberIDs"]
+        )
+        team.answer_score = data["answerScore"]
+        team.answers_submitted = data["answersSubmitted"]
+        try:
+            team.submit_ranking = data['submitRanking']
+        except KeyError:
+            print("submit rankings not posted yet; oops")
+        return team

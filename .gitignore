@@ -1,5 +1,7 @@
 __pycache__/
-venv/
 .breakpoints
+.venv
 .env
 *.log
+mypy.ini
+secrets.env
