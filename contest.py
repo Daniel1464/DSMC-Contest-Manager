@@ -19,8 +19,8 @@ class Contest:
             link: str,
             team_size_limit: int | None = None,
             total_teams_limit: int | None = None,
-            questions: list[Question] | None = None,
-            teams: list[Team] | None = None
+            questions: list[Question] | list[dict] | None = None,
+            teams: list[Team] | list[dict] | None = None
     ):
         self.name = name
         self.link = link

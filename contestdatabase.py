@@ -1,6 +1,15 @@
 from datastorageapi import DataStorageAPI
 from contest import Contest
 from contestperiod import ContestPeriod
+import json
+import os
+
+
+def _to_file_name(contest_name: str) -> str:
+    return "data/" + contest_name + ".json"
+
+
+GENERAL_CONTEST_DATA_FILENAME = "data/generalContestInfo.json"
 
 
 class ContestDatabase:
@@ -25,21 +34,20 @@ class ContestDatabase:
         }
         questions_data = [question.get_data() for question in contest.all_questions]
         teams_data = [team.get_data() for team in contest.all_teams]
-        all_contest_names: list[str] = self.storage_api.get_value("all-contest-names", evaluate=True)
-        if contest.name not in all_contest_names:
-            all_contest_names.append(contest.name)
-            self.storage_api.set_value("all-contest-names", all_contest_names)
-        self.storage_api.set_value("{contest}-INFO:".format(contest=contest.name), contest_information)
-        self.storage_api.set_value("{contest}-QUESTIONS:".format(contest=contest.name), questions_data)
-        self.storage_api.set_value("{contest}-TEAMS:".format(contest=contest.name), teams_data)
+        with open(GENERAL_CONTEST_DATA_FILENAME, 'w+') as file:
+            contest_info = json.load(file)
+            if contest.name not in contest_info['allContestNames']:
+                contest_info['allContestNames'].append(contest.name)
+                json.dump(contest_info, file, indent=6)
+        with open(_to_file_name(contest.name), 'w') as file:
+            json.dump({"info": contest_information, "questions": questions_data, "teams": teams_data}, file, indent=6)
 
     def get_contest(self, name: str) -> Contest:
-        contest_information: dict = self.storage_api.get_value(key="{contest}-INFO:".format(contest=name),
-                                                               evaluate=True)
-        questions_data: list = self.storage_api.get_value(key="{contest}-QUESTIONS:".format(contest=name),
-                                                          evaluate=True)
-        teams_data: list = self.storage_api.get_value(key="{contest}-TEAMS:".format(contest=name), evaluate=True)
-
+        with open(_to_file_name(name), 'w+') as file:
+            all_data = json.load(file)
+            contest_information: dict = all_data['info']
+            questions_data: list = all_data['questions']
+            teams_data: list = all_data['teams']
         # a special property of enums is that if you do ContestPeriod["preSignup"],
         # it"ll return ContestPeriod.preSignup, the enum that we want.
         contest: Contest = Contest(
@@ -50,17 +58,14 @@ class ContestDatabase:
             questions_data,
             teams_data
         )
-
         contest.period = ContestPeriod[contest_information["period"]]
         contest.team_submit_order = contest_information["teamSubmitOrder"]
         contest.channel_id_info = contest_information["channelIDInfo"]
         return contest
 
     def delete_contest(self, contest_name: str):
-        self.storage_api.del_value("{contest}-INFO:".format(contest=contest_name))
-        self.storage_api.del_value("{contest}-QUESTIONS:".format(contest=contest_name))
-        self.storage_api.del_value("{contest}-TEAMS:".format(contest=contest_name))
-
-        all_contest_names = self.storage_api.get_value("all-contest-names", evaluate=True)
-        all_contest_names.remove(contest_name)
-        self.storage_api.set_value("all-contest-names", all_contest_names)
+        os.remove(_to_file_name(contest_name))
+        with open(GENERAL_CONTEST_DATA_FILENAME, 'w+') as file:
+            contest_info = json.load(file)
+            contest_info['allContestNames'].remove(contest_name)
+            json.dump(contest_info, file, indent=6)

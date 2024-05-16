@@ -2,10 +2,7 @@ import ast
 import requests
 import os
 
-
-class DataAPIException(Exception):
-    def __init__(self):
-        super().__init__("There was an issue with the Data API. Check it's page for the specific error.")
+from exceptions import DataAPIException
 
 
 class DataStorageAPI:
@@ -33,7 +30,6 @@ class DataStorageAPI:
     def get_value(self, key: str, evaluate: bool = False, read_from_local_data: bool = True):
         if key in self.__local_data and read_from_local_data:
             return self.__local_data[key]
-        print(self.__local_data)
         res = self.session.get(
             "https://data-storage-system.danielchen1464.repl.co/database?password={passcode}&key={inputKey}".format(
                 passcode=os.environ[self.passwordStringKey], inputKey=key))
@@ -70,8 +66,8 @@ class DataStorageAPI:
             raise DataAPIException
         print(self.__local_data)
         res = self.session.get(
-            "https://data-storage-system.danielchen1464.repl.co/delete_key?password={passcode}&key={inputKey}".format(
-                passcode=os.environ[self.passwordStringKey], inputKey=key))
+            "https://data-storage-system.danielchen1464.repl.co/delete_key?password={passcode}&key={inputKey}"
+            .format(passcode=os.environ[self.passwordStringKey], inputKey=key))
         if res.ok:
             return res.content.decode("utf-8")
         else:

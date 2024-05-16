@@ -1,6 +1,14 @@
 from contestperiod import ContestPeriod
 
 
+class DataAPIException(Exception):
+    def __init__(self, base_err: str | Exception | None = None):
+        text = "There was an issue with the Data API. Check the replit database for specifics. "
+        if base_err is not None:
+            text += "Client-side Error"
+        super().__init__("There was an issue with the Data API. Check the data API for specifics. ")
+
+
 class TeamNameException(Exception):
     def __init__(self):
         super().__init__(

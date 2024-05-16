@@ -5,14 +5,13 @@ from question import Question
 from contestdatabase import ContestDatabase
 from contestperiod import ContestPeriod
 import os
-from datastorageapi import DataAPIException
 from exceptions import (
     AnswersAlreadySubmittedException,
     MemberInAnotherTeamException,
     MemberNotInTeamException,
     MemberNotInvitedException,
     OwnerLeaveTeamException,
-    WrongPeriodException
+    WrongPeriodException, DataAPIException
 )
 
 import traceback
