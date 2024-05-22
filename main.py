@@ -2,7 +2,6 @@ import discord
 from contest import Contest
 from team import Team
 from question import Question
-from contestdatabase import ContestDatabase
 from contestperiod import ContestPeriod
 import os
 from exceptions import (
@@ -27,20 +26,19 @@ tree: discord.app_commands.CommandTree = discord.app_commands.CommandTree(client
 
 # important!
 current_guild_id: int = int(os.environ["current_guild_id"])
-database: ContestDatabase = ContestDatabase('password')
 guild_category_name = "DSMC 2024"
 
 
 async def contest_name_autocompletion(interaction, current: str) -> list:
     data = []
-    for contest_name in database.get_all_contest_names():
+    for contest_name in Contest.all_names():
         data.append(discord.app_commands.Choice(name=contest_name.lower(), value=contest_name))
     return data
 
 
 async def team_name_autocompletion(interaction, current: str):
     contest_name = interaction.namespace.contest_name
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     team_name_choices = []
     for team in contest.all_teams:
         if interaction.user.id in team.invited_member_ids or interaction.user.id == team.owner_id:
@@ -49,7 +47,7 @@ async def team_name_autocompletion(interaction, current: str):
 
 
 async def all_team_names_autocompletion(interaction, current: str):
-    contest = database.get_contest(interaction.namespace.contest_name)
+    contest = Contest.from_json(interaction.namespace.contest_name)
     team_name_choices: list[discord.app_commands.Choice] = []
     for team in contest.all_teams:
         team_name_choices.append(discord.app_commands.Choice(name=team.name.lower(), value=team.name))
@@ -100,9 +98,8 @@ async def on_app_command_error(interaction, error):
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def create_contest(interaction, name: str, link: str, team_size_limit: int | None = None,
                          total_teams_limit: int | None = None):
-    newContest = Contest(name.lower(), link, team_size_limit, total_teams_limit)
+    Contest(name.lower(), link, team_size_limit, total_teams_limit).update_json()
     await interaction.response.send_message("Contest successfully created!")
-    database.update_contest(newContest)
 
 
 @tree.command(name="all_contest_competitors", 
@@ -110,7 +107,7 @@ async def create_contest(interaction, name: str, link: str, team_size_limit: int
               guild=discord.Object(id=current_guild_id))  
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def all_contest_competitors(interaction, contest_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     all_participants = [get_member_repr(interaction, member_id) for member_id in contest.all_contest_participants]
     all_invited_participants = [get_member_repr(interaction, member_id) for member_id in contest.all_invited_members]
     await interaction.response.send_message("These people are currently in a team: \n" + str(
@@ -131,7 +128,7 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
     if member_four is not None:
         invite_list.append(member_four)
 
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     try:
         new_team = Team(
             contest_instance=contest,
@@ -152,7 +149,7 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
                 "In order to join, use '/join_team {team_name}' in the Mathematics Server (it doesn't work within DMs)."
                 "If you don't want to join, ignore this message."
                 .format(user=interaction.user, contest_name=contest.name, team_name=team_name))
-        database.update_contest(contest)
+        contest.update_json()
     except WrongPeriodException:
         await interaction.response.send_message(
             "You can only create a team when this contest is in it's signup phase. Sorry!")
@@ -168,7 +165,7 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def invite_more_members(interaction, contest_name: str, member_one: discord.Member | None = None,
                               member_two: discord.Member | None = None, member_three: discord.Member | None = None):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     message = ""
     user_team = contest.get_team_of_user(interaction.user.id)
     if user_team is None:
@@ -183,7 +180,7 @@ async def invite_more_members(interaction, contest_name: str, member_one: discor
     if member_three is not None:
         user_team.invite_member(member_three.id)
         message += "{memberName} has been successfully added. \n".format(memberName=member_three.name)
-    database.update_contest(contest)
+    contest.update_json()
     await interaction.response.send_message(message)
 
 
@@ -192,7 +189,7 @@ async def invite_more_members(interaction, contest_name: str, member_one: discor
               guild=discord.Object(id=current_guild_id))  
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion, team_name=team_name_autocompletion)
 async def join_team(interaction, contest_name: str, team_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     new_team = contest.get_team(team_name)
     if interaction.user.id in new_team.member_ids or interaction.user.id == new_team.owner_id:
         await interaction.response.send_message(
@@ -204,7 +201,7 @@ async def join_team(interaction, contest_name: str, team_name: str):
         await interaction.response.send_message(
             "Hooray! You have officially joined team {teamName}! to leave, use /leave_current_team."
             .format(teamName=team_name))
-        database.update_contest(contest)
+        contest.update_json()
     except MemberNotInvitedException:
         await interaction.response.send_message(
             "Hmmm.... It seems that you haven't been invited to this team.", 
@@ -221,12 +218,12 @@ async def join_team(interaction, contest_name: str, team_name: str):
               guild=discord.Object(id=current_guild_id))  
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def change_team_name(interaction, contest_name: str, new_team_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     team = contest.get_team_of_user(interaction.user.id)
     if team is not None:
         previous_name = team.name
         team.name = new_team_name
-        database.update_contest(contest)
+        contest.update_json()
         await interaction.response.send_message(
             "The team that was previously refferred to as '" +
             previous_name + "' now has the name '" + team.name + "'."
@@ -241,9 +238,9 @@ async def change_team_name(interaction, contest_name: str, new_team_name: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def modify_team_size_limit(interaction, contest_name: str, size_limit: int):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     contest.team_size_limit = size_limit
-    database.update_contest(contest)
+    contest.update_json()
     await interaction.response.send_message("Team size limit has been updated to " + str(size_limit) + ".")
 
 
@@ -253,9 +250,9 @@ async def modify_team_size_limit(interaction, contest_name: str, size_limit: int
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def modify_total_teams_limit(interaction, contest_name: str, teams_limit: int):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     contest.total_teams_limit = teams_limit
-    database.update_contest(contest)
+    contest.update_json()
     await interaction.response.send_message("Total teams limit has been updated to " + str(teams_limit) + ".")
 
 
@@ -264,14 +261,14 @@ async def modify_total_teams_limit(interaction, contest_name: str, teams_limit: 
               guild=discord.Object(id=current_guild_id))  
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def leave_current_team(interaction, contest_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     user_team = contest.get_team_of_user(interaction.user.id)
     if user_team is None:
         await interaction.response.send_message("Hmmm... You don't seem to be in a team as of now.", ephemeral=True)
     else:
         try:
             user_team.remove_member(interaction.user.id)
-            database.update_contest(contest)
+            contest.update_json()
             await interaction.response.send_message("You have officially left your current team.")
         except OwnerLeaveTeamException:
             await interaction.response.send_message(
@@ -285,13 +282,13 @@ async def leave_current_team(interaction, contest_name: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def transfer_ownership(interaction, contest_name: str, new_owner: discord.Member):
     try:
-        contest = database.get_contest(contest_name)
+        contest = Contest.from_json(contest_name)
         player_team = contest.get_team_of_user(interaction.user.id)
         if player_team is None:
             await interaction.response.send_message("it looks like you are not in a team currently.")
         elif interaction.user.id == player_team.owner_id:
             player_team.transfer_ownership(new_owner.id)
-            database.update_contest(contest)
+            contest.update_json()
             await interaction.response.send_message(
                 "Ownership has been successfully transferred to {newOwner}!".format(newOwner=new_owner))
         else:
@@ -307,7 +304,7 @@ async def transfer_ownership(interaction, contest_name: str, new_owner: discord.
               guild=discord.Object(id=current_guild_id))  
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def unregister_team(interaction, contest_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     user_team = contest.get_team_of_user(interaction.user.id)
     if user_team is None:
         await interaction.response.send_message("Hmm.... You don't seem to be in a team as of now.", ephemeral=True)
@@ -325,7 +322,7 @@ async def unregister_team(interaction, contest_name: str):
                 "To sign up for another team, ask another team owner to invite you, then use /join."
                 .format(teamName=user_team.name))
         await interaction.response.send_message("Success!")
-        database.update_contest(contest)
+        contest.update_json()
 
 
 @tree.command(name="add_question", 
@@ -334,13 +331,13 @@ async def unregister_team(interaction, contest_name: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def add_question(interaction, contest_name: str, answer: float, points: int, problem_number: int | None = None):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     try:
         if problem_number is None:
             contest.add_question(Question(contest, answer, points))
         else:
             contest.add_question(Question(contest, answer, points), problem_number)
-        database.update_contest(contest)
+        contest.update_json()
         await interaction.response.send_message("Success!")
     except WrongPeriodException:
         await interaction.response.send_message(
@@ -354,10 +351,10 @@ async def add_question(interaction, contest_name: str, answer: float, points: in
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def remove_question(interaction, contest_name: str, question_number: int):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     try:
         contest.remove_question(question_number)
-        database.update_contest(contest)
+        contest.update_json()
         await interaction.response.send_message("Question with number " + str(question_number) + " has been removed.")
     except WrongPeriodException:
         await interaction.response.send_message("The competition is underway, so you cannot add or remove questions.")
@@ -386,9 +383,9 @@ async def change_contest_period(interaction, contest_name: str, period_name: str
     else:
         raise Exception("An invalid string " + period_name + " was passed.")
 
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     contest.period = period
-    database.update_contest(contest)
+    contest.update_json()
     await interaction.response.send_message("Success! The contest period has been changed to " + str(period))
 
 
@@ -398,7 +395,7 @@ async def change_contest_period(interaction, contest_name: str, period_name: str
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def create_contest_channels(interaction, contest_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     for team in contest.all_teams:
         manager_role = discord.utils.get(interaction.guild.roles, name="Olympiad Team")
         admin_role = discord.utils.get(interaction.guild.roles, name="Olympiad Manager")
@@ -417,7 +414,7 @@ async def create_contest_channels(interaction, contest_name: str):
                 overwrites=overwrites, 
                 category=category)
             contest.channel_id_info[team.name] = channel.id
-            database.update_contest(contest)
+            contest.update_json()
         except:
             await interaction.response.send_message(
                 "Hmmm.... It looks like this server doesn't have a category named '"
@@ -433,7 +430,7 @@ async def create_contest_channels(interaction, contest_name: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def delete_contest_channels(interaction, contest_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     for team in contest.all_teams:
         await interaction.guild.get_channel(contest.channel_id_info[team.name]).delete()
     await interaction.response.send_message("All contest channels deleted!.")
@@ -445,7 +442,7 @@ async def delete_contest_channels(interaction, contest_name: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def answer_question(interaction, contest_name: str, question_number: int, answer: float):
     try:
-        contest = database.get_contest(contest_name)
+        contest = Contest.from_json(contest_name)
         user_team = contest.get_team_of_user(interaction.user.id)
         if user_team is not None:
             user_team.answer(contest.get_question(question_number), answer)
@@ -453,7 +450,7 @@ async def answer_question(interaction, contest_name: str, question_number: int, 
             await interaction.response.send_message(
                 "Hmmm..... your team doesn't seem to be found in the contest. Maybe you haven't signed up yet?",
                 ephemeral=True)
-        database.update_contest(contest)
+        contest.update_json()
         await interaction.response.send_message(
             str(interaction.user) + " has answered question #{question_number}!".format(
                 question_number=question_number))
@@ -476,11 +473,11 @@ async def answer_question(interaction, contest_name: str, question_number: int, 
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def submit_team_answers(interaction, contest_name: str):
     try:
-        contest = database.get_contest(contest_name)
+        contest = Contest.from_json(contest_name)
         player_team = contest.get_team_of_user(interaction.user.id)
         if player_team is not None and player_team.owner_id == interaction.user.id:
             player_team.submit_answers()
-            database.update_contest(contest)
+            contest.update_json()
             await interaction.response.send_message("The owner has officially submitted all of their teams' answers!")
         else:
             await interaction.response.send_message(
@@ -496,7 +493,7 @@ async def submit_team_answers(interaction, contest_name: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def question_answer_score(interaction, contest_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     question_string = ""
     for question in contest.all_questions:
         question_string += "Q{questionNumber}: answer = {answer}, points = {pointValue} \n".format(
@@ -512,7 +509,7 @@ async def question_answer_score(interaction, contest_name: str):
               guild=discord.Object(id=current_guild_id))  
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def link(interaction, contest_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     if contest.period == ContestPeriod.competition or contest.period == ContestPeriod.postCompetition:
         await interaction.response.send_message(contest.link, ephemeral=True)
     else:
@@ -524,9 +521,9 @@ async def link(interaction, contest_name: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def change_link(interaction, contest_name: str, new_link: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     contest.link = new_link
-    database.update_contest(contest)
+    contest.update_json()
     await interaction.response.send_message("Link has been changed!")
 
 
@@ -535,7 +532,7 @@ async def change_link(interaction, contest_name: str, new_link: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def team_rankings(interaction, contest_name: str):
     try:
-        contest = database.get_contest(contest_name)
+        contest = Contest.from_json(contest_name)
         rankingString = ""
         counter = 1
         for team in contest.team_rankings:
@@ -558,7 +555,7 @@ async def team_rankings(interaction, contest_name: str):
               guild=discord.Object(id=current_guild_id))  
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def all_teams(interaction, contest_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     all_teams_string = ""
     for team in contest.all_teams:
         all_teams_string += "Team '{teamName}', with owner '{owner}' and members {members}, \n".format(
@@ -574,7 +571,7 @@ async def all_teams(interaction, contest_name: str):
               guild=discord.Object(id=current_guild_id))  
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def question_info(interaction, contest_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     all_questions_string = ""
     for question in contest.all_questions:
         all_questions_string += "Q" + str(question.get_number())
@@ -591,7 +588,7 @@ async def question_info(interaction, contest_name: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def delete_contest(interaction, contest_name: str):
-    database.delete_contest(contest_name)
+    Contest.delete_json(contest_name)
     await interaction.response.send_message("Contest has been deleted!")
 
 
@@ -600,7 +597,7 @@ async def delete_contest(interaction, contest_name: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion, team_name=all_team_names_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def remove_member_from_team(interaction, contest_name: str, team_name: str, member: discord.Member):
-    contest: Contest = database.get_contest(contest_name)
+    contest: Contest = Contest.from_json(contest_name)
     team = contest.get_team(team_name)
     try:
         team.remove_member(member.id)
@@ -620,7 +617,7 @@ async def remove_member_from_team(interaction, contest_name: str, team_name: str
     except MemberNotInTeamException:
         await interaction.user.send_message("This member is not currently in the team.", ephemeral=True)
     finally:
-        database.update_contest(contest)
+        contest.update_json()
 
 
 @tree.command(name="unsubmit_team_answers", description="MOD ONLY- unsubmits team answers in an emergency scenario",
@@ -628,11 +625,11 @@ async def remove_member_from_team(interaction, contest_name: str, team_name: str
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion, team_name=all_team_names_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 async def unsubmit_team_answers(interaction, contest_name: str, team_name: str):
-    contest: Contest = database.get_contest(contest_name)
+    contest: Contest = Contest.from_json(contest_name)
     team: Team = contest.get_team(team_name)
     team.answers_submitted = False
     team.submit_ranking = 0
-    database.update_contest(contest)
+    contest.update_json()
     await interaction.response.send_message("Success!")
 
 
@@ -642,13 +639,13 @@ async def unsubmit_team_answers(interaction, contest_name: str, team_name: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion, team_name=all_team_names_autocompletion)
 async def force_transfer_ownership(interaction, contest_name: str, team_name: str, new_owner: discord.Member):
     try:
-        contest = database.get_contest(contest_name)
+        contest = Contest.from_json(contest_name)
         player_team = contest.get_team(team_name)
         if player_team is None:
             await interaction.response.send_message("Hmmm... this team cannot be found", ephemeral=True)
         else:
             player_team.transfer_ownership(new_owner.id)
-            database.update_contest(contest)
+            contest.update_json()
             await interaction.response.send_message(
                 "Ownership has been successfully transferred to {newOwner}!".format(newOwner=new_owner))
     except MemberNotInTeamException:
@@ -661,10 +658,10 @@ async def force_transfer_ownership(interaction, contest_name: str, team_name: st
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion, team_name=all_team_names_autocompletion)
 async def force_add_members(interaction, contest_name: str, team_name: str, new_member: discord.Member):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     team = contest.get_team(team_name)
     team.member_ids.append(new_member.id)
-    database.update_contest(contest)
+    contest.update_json()
     await interaction.response.send_message("Success!")
 
 
@@ -674,11 +671,11 @@ async def force_add_members(interaction, contest_name: str, team_name: str, new_
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def force_team_submissions(interaction, contest_name: str):
     try:
-        contest = database.get_contest(contest_name)
+        contest = Contest.from_json(contest_name)
         for team in contest.all_teams:
             if not team.answers_submitted:
                 team.submit_answers()
-        database.update_contest(contest)
+        contest.update_json()
         await interaction.response.send_message("Success!")
     except WrongPeriodException:
         await interaction.response.send_message("The period must be ContestPeriod.Competition for this to work.")
@@ -690,10 +687,10 @@ async def force_team_submissions(interaction, contest_name: str):
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion, team_name=all_team_names_autocompletion)
 async def answer_question_for_team(interaction, contest_name: str, team_name: str, question_number: int, answer: float):
     try:
-        contest = database.get_contest(contest_name)
+        contest = Contest.from_json(contest_name)
         team = contest.get_team(team_name)
         team.answer(contest.get_question(question_number), answer)
-        database.update_contest(contest)
+        contest.update_json()
         await interaction.response.send_message(
             "An admin has answered question #{question_number}!".format(question_number=question_number))
     except AnswersAlreadySubmittedException:
@@ -711,7 +708,7 @@ async def answer_question_for_team(interaction, contest_name: str, team_name: st
               description="What your team has answered so far.")
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def team_answer_score(interaction, contest_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     team = contest.get_team_of_user(interaction.user.id)
     if team is not None:
         response_str = ""
@@ -727,7 +724,7 @@ async def team_answer_score(interaction, contest_name: str):
               description="Bot administrators only; gets the team answer with more admin-exclusive info.")
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion, team_name=all_team_names_autocompletion)
 async def team_answer_score_admin(interaction, contest_name: str, team_name: str):
-    contest = database.get_contest(contest_name)
+    contest = Contest.from_json(contest_name)
     team = contest.get_team(team_name)
     if team is not None:
         response_str = ""
@@ -764,15 +761,7 @@ async def sync_commands_globally(interaction):
     await tree.sync()
     await interaction.followup.send("Commands synced across all guilds.")
 
-
-@tree.command(name="sync_data_storage_api",
-              description="Bot administrators only; syncs data storage api")
-@discord.app_commands.check(is_admin)
-async def sync_data_storage_api(interaction):
-    database.storage_api.reset_local_data()
-    await interaction.response.send_message("Success!")
-
-
+"""
 db_group = discord.app_commands.Group(
     name="db",
     description="Bot administrators only; calls an action on the remote database.")
@@ -830,8 +819,9 @@ async def db_keys(interaction):
             "DataAPIException.",
             ephemeral=True
         )
+"""
 
 
 # DO NOT DELETE THESE LINES OF CODE:
-tree.add_command(db_group)
+#tree.add_command(db_group)
 client.run(os.environ["token"])

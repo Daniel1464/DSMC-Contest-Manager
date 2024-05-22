@@ -1,3 +1,7 @@
+import json
+import os
+from typing import Self
+
 from question import Question
 from team import Team
 from functools import singledispatch
@@ -9,6 +13,13 @@ from exceptions import (
     WrongPeriodException
 )
 from contestperiod import ContestPeriod
+
+
+def _to_file_name(contest_name: str) -> str:
+    return "data/" + contest_name + ".json"
+
+
+GENERAL_CONTEST_DATA_FILENAME = "data/generalContestInfo.json"
 
 
 class Contest:
@@ -27,9 +38,9 @@ class Contest:
         self.team_size_limit = team_size_limit
         self.total_teams_limit = total_teams_limit
         # used to keep track who submitted first, second, third, etc.
-        self.team_submit_order = 1
+        self.team_submit_order: int = 1
         # used to keep track of which period the contest is currently in
-        self.period = ContestPeriod.preSignup
+        self.period: ContestPeriod = ContestPeriod.preSignup
         self.channel_id_info: dict = {}
 
         self.__questions: list[Question] = [] if questions is None else questions
@@ -40,6 +51,64 @@ class Contest:
             self.__questions = [Question.from_data(self, data) for data in questions]
         if teams != [] and not isinstance(teams[0], Team):
             self.__teams = [Team.from_data(self, data) for data in teams]
+
+    @staticmethod
+    def all_names() -> list[str]:
+        with open(GENERAL_CONTEST_DATA_FILENAME, 'w+') as file:
+            return json.load(file)['allContestNames']
+
+    @classmethod
+    def from_json(cls, name: str) -> Self:
+        with open(_to_file_name(name), 'w+') as file:
+            all_data = json.load(file)
+            contest_information: dict = all_data['info']
+            questions_data: list = all_data['questions']
+            teams_data: list = all_data['teams']
+        # a special property of enums is that if you do ContestPeriod["preSignup"],
+        # it"ll return ContestPeriod.preSignup, the enum that we want.
+        contest: Contest = Contest(
+            contest_information["name"],
+            contest_information["link"],
+            contest_information["teamSizeLimit"],
+            contest_information["totalTeamsLimit"],
+            questions_data,
+            teams_data
+        )
+        contest.period = ContestPeriod[contest_information["period"]]
+        contest.team_submit_order = contest_information["teamSubmitOrder"]
+        contest.channel_id_info = contest_information["channelIDInfo"]
+        return contest
+
+    @staticmethod
+    def delete_json(contest_name: str):
+        os.remove(_to_file_name(contest_name))
+        with open(GENERAL_CONTEST_DATA_FILENAME, 'w+') as file:
+            contest_info = json.load(file)
+            contest_info['allContestNames'].remove(contest_name)
+            json.dump(contest_info, file, indent=6)
+
+    def update_json(self):
+        # when we do str(contest.period), it will return ContestPeriod.(SomePeriod)
+        # str(contest.period)[contest.period.index(".")+1:] makes it return only the period name.
+        # for example, ContestPeriod.preSignup would turn into preSignup.
+        contest_information = {
+            "teamSizeLimit": self.team_size_limit,
+            "totalTeamsLimit": self.total_teams_limit,
+            "link": self.link,
+            "name": self.name,
+            "period": str(self.period)[str(self.period).index(".") + 1:],
+            "teamSubmitOrder": self.team_submit_order,
+            "channelIDInfo": self.channel_id_info
+        }
+        questions_data = [question.get_data() for question in self.all_questions]
+        teams_data = [team.get_data() for team in self.all_teams]
+        with open(GENERAL_CONTEST_DATA_FILENAME, 'w+') as file:
+            contest_info = json.load(file)
+            if self.name not in contest_info['allContestNames']:
+                contest_info['allContestNames'].append(self.name)
+                json.dump(contest_info, file, indent=6)
+        with open(_to_file_name(self.name), 'w') as file:
+            json.dump({"info": contest_information, "questions": questions_data, "teams": teams_data}, file, indent=6)
 
     @property
     def all_contest_participants(self) -> list[int]:
