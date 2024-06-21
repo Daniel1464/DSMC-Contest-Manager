@@ -27,4 +27,4 @@ class Question:
         return self.contest_instance.all_questions.index(self) + 1
 
     # corrects for floating point error.
-    def is_correct(self, answer: float): return abs(answer - self.correct_answer) <= 0.00000000000001
+    def is_correct(self, answer: float): return abs(answer - self.correct_answer) < 1e-8

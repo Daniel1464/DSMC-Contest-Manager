@@ -19,7 +19,7 @@ def _to_file_name(contest_name: str) -> str:
     return "data/" + contest_name + ".json"
 
 
-GENERAL_CONTEST_DATA_FILENAME = "data/generalContestInfo.json"
+_GENERAL_CONTEST_DATA_FILENAME = "data/generalContestInfo.json"
 
 
 class Contest:
@@ -54,7 +54,7 @@ class Contest:
 
     @staticmethod
     def all_names() -> list[str]:
-        with open(GENERAL_CONTEST_DATA_FILENAME, 'w+') as file:
+        with open(_GENERAL_CONTEST_DATA_FILENAME, 'w+') as file:
             return json.load(file)['allContestNames']
 
     @classmethod
@@ -82,7 +82,7 @@ class Contest:
     @staticmethod
     def delete_json(contest_name: str):
         os.remove(_to_file_name(contest_name))
-        with open(GENERAL_CONTEST_DATA_FILENAME, 'w+') as file:
+        with open(_GENERAL_CONTEST_DATA_FILENAME, 'w+') as file:
             contest_info = json.load(file)
             contest_info['allContestNames'].remove(contest_name)
             json.dump(contest_info, file, indent=6)
@@ -102,7 +102,7 @@ class Contest:
         }
         questions_data = [question.get_data() for question in self.all_questions]
         teams_data = [team.get_data() for team in self.all_teams]
-        with open(GENERAL_CONTEST_DATA_FILENAME, 'w+') as file:
+        with open(_GENERAL_CONTEST_DATA_FILENAME, 'w+') as file:
             contest_info = json.load(file)
             if self.name not in contest_info['allContestNames']:
                 contest_info['allContestNames'].append(self.name)
