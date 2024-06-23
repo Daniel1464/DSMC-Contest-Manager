@@ -1,14 +1,6 @@
 from contestperiod import ContestPeriod
 
 
-class DataAPIException(Exception):
-    def __init__(self, base_err: str | Exception | None = None):
-        text = "There was an issue with the Data API. Check the replit database for specifics. "
-        if base_err is not None:
-            text += "Client-side Error"
-        super().__init__("There was an issue with the Data API. Check the data API for specifics. ")
-
-
 class TeamNameException(Exception):
     def __init__(self):
         super().__init__(
@@ -18,16 +10,6 @@ class TeamNameException(Exception):
 class TeamSizeExceededException(Exception):
     def __init__(self):
         super().__init__("The size of this team has exceeded it's limit.")
-
-
-class DuplicateMemberException(Exception):
-    def __init__(self):
-        super().__init__("This team shares member IDs with other team members within the contest.")
-
-
-class ContestTeamLimitException(Exception):
-    def __init__(self):
-        super().__init__("This contest has too many teams(the number of teams are restricted in this contest)")
 
 
 class MemberNotInTeamException(Exception):

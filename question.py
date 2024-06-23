@@ -13,7 +13,15 @@ class Question:
         self.correct_answer = correct_answer
         self.point_value = point_value
 
-    def get_data(self) -> dict:
+    @property
+    def number(self) -> int:
+        return self.contest_instance.questions.index(self) + 1
+
+    # corrects for floating point error.
+    def verify(self, answer: float): return abs(answer - self.correct_answer) < 1e-8
+
+    @property
+    def data(self) -> dict:
         return {
             "correctAnswer": self.correct_answer,
             "pointValue": self.point_value
@@ -22,9 +30,3 @@ class Question:
     @staticmethod
     def from_data(contest_instance, data: dict):
         return Question(contest_instance, data["correctAnswer"], data["pointValue"])
-
-    def get_number(self) -> int:
-        return self.contest_instance.all_questions.index(self) + 1
-
-    # corrects for floating point error.
-    def is_correct(self, answer: float): return abs(answer - self.correct_answer) < 1e-8
