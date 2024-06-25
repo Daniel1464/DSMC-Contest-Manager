@@ -52,6 +52,7 @@ class Team:
         if self.contest_instance.team_size_limit and len(self.member_ids) > self.contest_instance.team_size_limit:
             raise TeamSizeExceededException
         self.member_ids.append(member_id)
+        self.invited_member_ids.remove(member_id)
 
     def remove_member(self, member_id: int):
         if member_id in self.member_ids:

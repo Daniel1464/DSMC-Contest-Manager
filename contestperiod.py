@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class ContestPeriod(Enum):
-    preSignup = 0
-    signup = 1
-    competition = 2
-    postCompetition = 3
+    preSignup = "pre-signup"
+    signup = "signup"
+    competition = "competition"
+    postCompetition = "post-competition"

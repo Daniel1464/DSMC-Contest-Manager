@@ -1,0 +1,37 @@
+{
+      "info": {
+            "teamSizeLimit": null,
+            "link": "PRIMER: https://drive.google.com/file/d/1JEeU3QLRGNEsQhzDi--vMhe4qCA_IfTJ/view?usp=sharing",
+            "name": "dsmc summer 2024 round 1",
+            "period": "signup",
+            "teamSubmitOrder": 1
+      },
+      "questions": [],
+      "teams": [
+            {
+                  "name": "nerddisc",
+                  "ownerID": 715983337742794823,
+                  "memberIDs": [
+                        636730392115675156
+                  ],
+                  "invitedMemberIDs": [
+                        715983337742794823,
+                        1101526250427777106
+                  ],
+                  "answers": {},
+                  "answersSubmitted": false,
+                  "submitRanking": 0
+            },
+            {
+                  "name": "PJW's Face",
+                  "ownerID": 594276164151803939,
+                  "memberIDs": [
+                        620678286925889556
+                  ],
+                  "invitedMemberIDs": [],
+                  "answers": {},
+                  "answersSubmitted": false,
+                  "submitRanking": 0
+            }
+      ]
+}
