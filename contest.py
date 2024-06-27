@@ -4,7 +4,6 @@ from typing import Self
 
 from question import Question
 from team import Team
-from functools import singledispatch
 from exceptions import (
     MemberInAnotherTeamException,
     TeamNameException,
@@ -132,22 +131,13 @@ class Contest:
         else:
             raise WrongPeriodException(ContestPeriod.preSignup, ContestPeriod.signup)
 
-    # How these lines of code work:
-    # Essentially, @singledispatch allows the remove_question function
-    # to have 2 different functionalities.
-    # inputting a question object into object.remove_question() will cause it to remove the question,
-    # while inputting a question number into the function will cause it to remove the question with that number.
-    @singledispatch
-    def remove_question(self, question_number: int):
+    def remove_question(self, identifier: Question | int):
         if self.period == ContestPeriod.preSignup or self.period == ContestPeriod.signup:
-            self.questions.pop(question_number - 1)
-        else:
-            raise WrongPeriodException(ContestPeriod.preSignup, ContestPeriod.signup)
-
-    @remove_question.register
-    def _(self, question: Question):
-        if self.period == ContestPeriod.preSignup or self.period == ContestPeriod.signup:
-            self.questions.remove(question)
+            if isinstance(identifier, Question):
+                self.questions.remove(identifier)
+            else:
+                # identifier now represents a question number instead
+                self.questions.pop(identifier - 1)
         else:
             raise WrongPeriodException(ContestPeriod.preSignup, ContestPeriod.signup)
 
@@ -166,16 +156,9 @@ class Contest:
         else:
             raise WrongPeriodException(ContestPeriod.signup)
 
-    @singledispatch
-    def remove_team(self, team: Team):
+    def remove_team(self, identifier: Team | str):
+        team = identifier if isinstance(identifier, Team) else self.get_team(team_name=identifier)
         self.teams.remove(team)
-
-    @remove_team.register
-    def _(self, team_name: str):
-        for team in self.teams:
-            if team.name == team_name:
-                self.teams.remove(team)
-                return
 
     def get_team(self, team_name: str) -> Team:
         for team in self.teams:

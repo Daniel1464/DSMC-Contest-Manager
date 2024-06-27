@@ -1,11 +1,16 @@
 import json
+import pytz
 import discord
+import traceback
+import logging
+import os
+from dotenv import load_dotenv
+from datetime import datetime
 
 from contest import Contest
 from team import Team
 from question import Question
 from contestperiod import ContestPeriod
-import os
 from exceptions import (
     AnswersAlreadySubmittedException,
     MemberInAnotherTeamException,
@@ -17,9 +22,6 @@ from exceptions import (
     TeamNameException,
 )
 
-import traceback
-import logging
-from dotenv import load_dotenv
 load_dotenv("secrets.env")
 
 intents = discord.Intents.default()
@@ -30,7 +32,6 @@ tree: discord.app_commands.CommandTree = discord.app_commands.CommandTree(client
 # constants
 GUILD = discord.Object(id=624314920158232616)
 DANIEL_USER_ID = 614549755342880778
-
 assert GUILD is not None
 
 
@@ -61,12 +62,12 @@ async def all_team_names_autocompletion(interaction, current: str):
     return team_name_choices
 
 
-def get_member_repr(interaction, member_id: int) -> str:
-    member = interaction.guild.get_member(member_id)
+def member_id_to_name(interaction, member_id: int) -> str:
+    member: discord.Member = interaction.guild.get_member(member_id)
     if member is None:
         return "(Member not found)"
     else:
-        return member.name
+        return member.display_name
 
 
 @client.event
@@ -83,11 +84,13 @@ async def on_app_command_error(interaction, error):
     if daniel:
         channel = await daniel.create_dm()
         stack_trace = traceback.format_exc()
+        date_est = datetime.now(pytz.timezone('US/Eastern'))
+        error_text = f"Date: {date_est} \n {stack_trace}"
         with open('latest_error.log', 'w+') as file:
-            file.write(stack_trace)
-        await channel.send(f"Hey Daniel, the user '{interaction.user.name}' just caused an error in your code.")
+            file.write(error_text)
+        await channel.send(f"Hey Daniel, the user '{interaction.user.display_name}' just caused an error in your code.")
         await channel.send("This is the error file: ", file=discord.File("latest_error.log"))
-        logging.warning(stack_trace)
+        logging.warning(error_text)
     else:
         print("Failed to write to disk.")
         logging.warning(error)
@@ -144,8 +147,8 @@ async def create_contest(interaction, name: str, pdf_link: str, team_size_limit:
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def all_contest_competitors(interaction, contest_name: str):
     contest = Contest.from_json(contest_name)
-    all_participants = [get_member_repr(interaction, member_id) for member_id in contest.registered_members]
-    all_invited_participants = [get_member_repr(interaction, member_id) for member_id in contest.invited_members]
+    all_participants = [member_id_to_name(interaction, member_id) for member_id in contest.registered_members]
+    all_invited_participants = [member_id_to_name(interaction, member_id) for member_id in contest.invited_members]
     await interaction.response.send_message("These people are currently in a team: \n" + str(
         all_participants) + "\n These people are currently invited to a team: " + str(all_invited_participants))
 
@@ -208,13 +211,13 @@ async def invite_more_members(interaction, contest_name: str, member_one: discor
         return
     if member_one:
         user_team.invite_member(member_one.id)
-        success_messages.append(f"{member_one.name} has been successfully invited.")
+        success_messages.append(f"{member_one.display_name} has been successfully invited.")
     if member_two:
         user_team.invite_member(member_two.id)
-        success_messages.append(f"{member_two.name} has been successfully invited.")
+        success_messages.append(f"{member_two.display_name} has been successfully invited.")
     if member_three:
         user_team.invite_member(member_three.id)
-        success_messages.append(f"{member_three.name} has been successfully invited.")
+        success_messages.append(f"{member_three.display_name} has been successfully invited.")
     contest.update_json()
     await interaction.response.send_message("\n".join(success_messages))
 
@@ -596,8 +599,9 @@ async def show_teams(interaction, contest_name: str):
     contest = Contest.from_json(contest_name)
     team_blurbs: list[str] = []
     for team in contest.teams:
-        team_blurbs.append(f"Team '{team.name}', with owner '{get_member_repr(interaction, team.owner_id)}' and members"
-                           f" {[get_member_repr(interaction, member_id) for member_id in team.member_ids]},")
+        team_blurbs.append(
+            f"Team '{team.name}', with owner '{member_id_to_name(interaction, team.owner_id)}' and members"
+            f" {[member_id_to_name(interaction, member_id) for member_id in team.member_ids]},")
     await interaction.response.send_message("All teams: \n" + "\n".join(team_blurbs))
 
 
