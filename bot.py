@@ -1,11 +1,11 @@
 import json
-import pytz
 import discord
 import traceback
 import logging
 import os
 from dotenv import load_dotenv
 from datetime import datetime
+from pytz import timezone
 
 from contest import Contest
 from team import Team
@@ -72,7 +72,7 @@ def member_id_to_name(interaction, member_id: int) -> str:
 
 @client.event
 async def on_ready():
-    print("Ready!")
+    print("Ready! - " + datetime.now(timezone('US/Eastern')).strftime("%m/%d/%Y %H:%M:%S"))
 
 
 @tree.error
@@ -84,7 +84,7 @@ async def on_app_command_error(interaction, error):
     if daniel:
         channel = await daniel.create_dm()
         stack_trace = traceback.format_exc()
-        date_est = datetime.now(pytz.timezone('US/Eastern'))
+        date_est = datetime.now(timezone('US/Eastern'))
         error_text = f"Date: {date_est} \n {stack_trace}"
         with open('latest_error.log', 'w+') as file:
             file.write(error_text)
@@ -147,8 +147,8 @@ async def create_contest(interaction, name: str, pdf_link: str, team_size_limit:
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 async def all_contest_competitors(interaction, contest_name: str):
     contest = Contest.from_json(contest_name)
-    all_participants = [member_id_to_name(interaction, member_id) for member_id in contest.registered_members]
-    all_invited_participants = [member_id_to_name(interaction, member_id) for member_id in contest.invited_members]
+    all_participants = [member_id_to_name(interaction, member_id) for member_id in contest.registered_member_ids]
+    all_invited_participants = [member_id_to_name(interaction, member_id) for member_id in contest.invited_member_ids]
     await interaction.response.send_message("These people are currently in a team: \n" + str(
         all_participants) + "\n These people are currently invited to a team: " + str(all_invited_participants))
 
@@ -197,11 +197,46 @@ async def register_team(interaction, contest_name: str, team_name: str, member_t
         await interaction.response.send_message("There is already a team with the name " + team_name)
 
 
+@tree.command(name="create_team",
+              description="[Mod Only] Creates a team with another owner.",
+              guild=GUILD)
+@discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
+async def create_team(interaction, contest_name: str, team_name: str,
+                      owner: discord.Member, member_two: discord.Member | None = None,
+                      member_three: discord.Member | None = None, member_four: discord.Member | None = None):
+    contest = Contest.from_json(contest_name)
+    potential_current_team: Team | None = contest.get_team_of_user(owner.id)
+    if potential_current_team:
+        await interaction.response.send_message(f"The owner is already in team {potential_current_team.name}.")
+        return
+    if team_name in map(lambda t: t.name, contest.teams):
+        await interaction.response.send_message(f"The team with name {team_name} already exists.")
+        return
+    try:
+        new_team = Team(
+            contest_instance=contest,
+            name=team_name,
+            owner_id=owner.id
+        )
+        contest.add_team(new_team)
+        for member in [member_two, member_three, member_four]:
+            if member is None:
+                continue
+            new_team.register_member(member.id, ignore_invite=True)
+        await interaction.response.send_message(f"Team {team_name} has been created by admin.", ephemeral=True)
+        contest.update_json()
+    except WrongPeriodException:
+        await interaction.response.send_message(
+            "You can only create a team when this contest is in it's signup phase. Sorry!")
+    except TeamNameException:
+        await interaction.response.send_message("There is already a team with the name " + team_name)
+
+
 @tree.command(name="invite_members",
               description="Invites more members to your team.",
               guild=GUILD)
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
-async def invite_more_members(interaction, contest_name: str, member_one: discord.Member | None = None,
+async def invite_more_members(interaction, contest_name: str, member_one: discord.Member,
                               member_two: discord.Member | None = None, member_three: discord.Member | None = None):
     contest = Contest.from_json(contest_name)
     success_messages: list[str] = []
@@ -385,6 +420,25 @@ async def remove_question(interaction, contest_name: str, question_number: int):
         await interaction.response.send_message("The competition is underway, so you cannot add or remove questions.")
 
 
+@tree.command(name="change_question",
+              description="[Mod Only] Changes a question's properties.",
+              guild=GUILD)
+@discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
+@discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
+async def change_answer(interaction, contest_name: str, question_num: int,
+                        new_answer: float | None = None, new_point_value: float | None = None):
+    contest = Contest.from_json(contest_name)
+    try:
+        question = contest.get_question(question_num)
+        if new_answer:
+            question.correct_answer = new_answer
+        if new_point_value:
+            question.point_value = new_point_value
+        contest.update_json()
+    except KeyError:
+        await interaction.response.send_message(f"The contest only has a total of {len(contest.questions)} questions.")
+
+
 @tree.command(name="change_contest_period",
               description="[Mod Only] Changes the period of a contest.",
               guild=GUILD)
@@ -438,15 +492,19 @@ async def contest_period(interaction, contest_name: str):
     await interaction.response.send_message(message)
 
 
-@tree.command(name="create_contest_channels",
-              description="[Mod Only] Creates the private channels for all of the teams.",
+@tree.command(name="start_competition",
+              description="[Mod Only] Starts the competition and creates private team channels.",
               guild=GUILD)
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
-async def create_contest_channels(interaction, contest_name: str, channel_category: discord.CategoryChannel):
+async def start_competition(interaction, contest_name: str, channel_category: discord.CategoryChannel):
     contest = Contest.from_json(contest_name)
+    # sets the contest period
+    contest.period = ContestPeriod.competition
+    # then, creates the appropriate contest channels
     manager_role = discord.utils.get(interaction.guild.roles, name="Olympiad Team")
     admin_role = discord.utils.get(interaction.guild.roles, name="Olympiad Manager")
+    contestant_role = discord.utils.get(interaction.guild.roles, name="DSMC Contestant")
     for team in contest.teams:
         overwrites = {
             interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -455,24 +513,45 @@ async def create_contest_channels(interaction, contest_name: str, channel_catego
             interaction.guild.get_member(team.owner_id): discord.PermissionOverwrite(read_messages=True)
         }
         for member_id in team.member_ids:
-            overwrites[interaction.guild.get_member(member_id)] = discord.PermissionOverwrite(read_messages=True)
+            member = interaction.guild.get_member(member_id)
+            if member:
+                overwrites[member] = discord.PermissionOverwrite(read_messages=True)
+                await member.add_roles(contestant_role)
+            else:
+                await interaction.response.send_message("Member with ID {member_id} was not found.", ephemeral=True)
         channel = await interaction.guild.create_text_channel(
             team.name + '-contest-channel',
             overwrites=overwrites,
             category=channel_category)
         team.channel_id = channel.id
-        contest.update_json()
+    contest.update_json()
     await interaction.response.send_message("Channels have been opened!.")
 
 
-# untested.
-@tree.command(name="delete_contest_channels",
-              description="[Mod Only; DANGER ZONE] Deletes all of the contest channels.",
+@tree.command(name="assign_roles",
+              description="[Mod Only] Assigns the DSMC Contestant role if it hasn't already been assigned.",
               guild=GUILD)
 @discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
 @discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
-async def delete_contest_channels(interaction, contest_name: str):
+async def start_competition(interaction, contest_name: str):
+    contestant_role = discord.utils.get(interaction.guild.roles, name="DSMC Contestant")
+    for member_id in Contest.from_json(contest_name).registered_member_ids:
+        member = interaction.guild.get_member(member_id)
+        if member:
+            await member.add_roles(contestant_role)
+    await interaction.response.send_message("Success!")
+
+
+# untested.
+@tree.command(name="end_competition",
+              description="[Mod Only; DANGER ZONE] Ends the competition and deletes the contest channels.",
+              guild=GUILD)
+@discord.app_commands.autocomplete(contest_name=contest_name_autocompletion)
+@discord.app_commands.checks.has_any_role('Olympiad Team', 'Olympiad Manager')
+async def end_competition(interaction, contest_name: str):
     contest = Contest.from_json(contest_name)
+    contest.period = ContestPeriod.postCompetition
+    contest.update_json()
     for team in contest.teams:
         if team.channel_id:
             await interaction.guild.get_channel(team.channel_id).delete()
@@ -643,7 +722,7 @@ async def remove_member_from_team(interaction, contest_name: str, team_name: str
         team.remove_member(member.id)
     except OwnerLeaveTeamException:
         await interaction.user.send_message(
-            "You cannot remove an owner. Use /force_transfer_ownership to transfer ownership to someone else.",
+            "You cannot remove an owner. Use /transfer_ownership to transfer ownership to someone else.",
             ephemeral=True)
     except MemberNotInTeamException:
         await interaction.user.send_message("This member is not currently in the team.", ephemeral=True)

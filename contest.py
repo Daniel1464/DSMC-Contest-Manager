@@ -96,7 +96,7 @@ class Contest:
             json.dump({"info": contest_info, "questions": question_data_list, "teams": team_data_list}, file, indent=6)
 
     @property
-    def registered_members(self) -> list[int]:
+    def registered_member_ids(self) -> list[int]:
         ids = []
         for team in self.teams:
             for member_id in team.member_ids + [team.owner_id]:
@@ -105,7 +105,7 @@ class Contest:
         return ids
 
     @property
-    def invited_members(self) -> list[int]:
+    def invited_member_ids(self) -> list[int]:
         ids = []
         for team in self.teams:
             for member_id in team.invited_member_ids:
@@ -150,7 +150,7 @@ class Contest:
                 if team.name == new_team.name:
                     raise TeamNameException
             for memberID in new_team.member_ids + [new_team.owner_id]:
-                if memberID in self.registered_members:
+                if memberID in self.registered_member_ids:
                     raise MemberInAnotherTeamException
             self.teams.append(new_team)
         else:
