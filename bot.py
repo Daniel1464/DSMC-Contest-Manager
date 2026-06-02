@@ -1,3 +1,4 @@
+# Hi!
 import json
 import discord
 import traceback
